@@ -16,11 +16,16 @@ import com.example.data.model.UserSession
 import com.example.data.model.WhiteboardPoint
 import com.example.data.model.WhiteboardStroke
 import com.example.data.local.ExamCategoryEntity
+import com.example.data.repository.FirestoreSyncRepository
 import com.example.data.repository.H2sRepository
 import com.google.firebase.Firebase
 import com.google.firebase.ai.GenerativeModel
 import com.google.firebase.ai.ai
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +75,9 @@ private const val TAG_AI = "H2sAiCoach"
 class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   private val repository = H2sRepository.getInstance(application)
+  private val firestoreSyncRepo = FirestoreSyncRepository(application)
+  private val firebaseAuth = FirebaseAuth.getInstance()
+  val firebaseUser = MutableStateFlow<FirebaseUser?>(firebaseAuth.currentUser)
 
   private val generativeModel: GenerativeModel by lazy {
     Firebase.ai.generativeModel(modelName = "gemini-3.8-flash")
@@ -368,6 +376,23 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
     viewModelScope.launch {
       repository.saveAttempt(result)
+      try {
+        if (firebaseAuth.currentUser != null) {
+          val timeElapsed = (test.durationMinutes * 60L) - _secondsRemaining.value
+          firestoreSyncRepo.saveMockResult(
+            testId = test.id,
+            testTitle = test.title,
+            category = test.category,
+            score = _liveScore.value,
+            totalQuestions = test.questions.size,
+            correctAnswers = _correctCount.value,
+            incorrectAnswers = _wrongCount.value,
+            timeTakenSeconds = if (timeElapsed > 0) timeElapsed else 60L
+          )
+        }
+      } catch (e: Exception) {
+        Log.w("H2sViewModel", "Firestore sync skipped: ${e.message}")
+      }
     }
 
     _currentScreen.value = Screen.Scorecard
@@ -600,8 +625,38 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
+  fun signInWithGoogleToken(
+    idToken: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+  ) {
+    viewModelScope.launch {
+      try {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val authResult = firebaseAuth.signInWithCredential(credential).await()
+        val user = authResult.user
+        val name = user?.displayName ?: "Odisha Aspirant"
+        val email = user?.email ?: "aspirant@h2sstudy.com"
+        firebaseUser.value = user
+
+        firestoreSyncRepo.syncUserProfile(name, email, _selectedCategory.value)
+
+        val phoneSeed = (email.filter { it.isDigit() } + "9861000000").take(10)
+        repository.register(name, phoneSeed, "Odisha", "student")
+
+        showToast("Signed in as $name with Google Cloud Sync!")
+        onSuccess()
+      } catch (e: Exception) {
+        Log.e("H2sViewModel", "Google Sign-In failed", e)
+        onError(e.localizedMessage ?: "Google Sign-In failed")
+      }
+    }
+  }
+
   fun signOut() {
     viewModelScope.launch {
+      firebaseAuth.signOut()
+      firebaseUser.value = null
       repository.signOut()
       _currentScreen.value = Screen.Auth
       showToast("Signed out. Credentials remembered for 1-tap return.")

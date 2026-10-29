@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile data for H2S STUDY aspirants",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Unique auth UID" },
+        "displayName": { "type": "string", "description": "Student name" },
+        "email": { "type": "string", "description": "Student email" },
+        "targetExam": { "type": "string", "description": "Target exam category e.g. OPSC, OSSC" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp via serverTimestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp via serverTimestamp" }
+      },
+      "required": ["userId", "email"]
+    },
+    "UserMockResult": {
+      "title": "UserMockResult",
+      "description": "User mock test submission and performance record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Mock attempt ID" },
+        "userId": { "type": "string", "description": "Student auth UID" },
+        "testId": { "type": "string", "description": "Target mock test ID" },
+        "testTitle": { "type": "string", "description": "Title of the exam mock" },
+        "category": { "type": "string", "description": "Exam category e.g. OPSC OAS, OSSC CGL" },
+        "score": { "type": "number", "description": "Score achieved" },
+        "totalQuestions": { "type": "number", "description": "Total number of questions" },
+        "correctAnswers": { "type": "number", "description": "Number of correct answers" },
+        "incorrectAnswers": { "type": "number", "description": "Number of incorrect answers" },
+        "timeTakenSeconds": { "type": "number", "description": "Time elapsed in seconds" },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Completion timestamp via serverTimestamp" }
+      },
+      "required": ["id", "userId", "testId", "score", "totalQuestions"]
+    },
+    "ExamCategory": {
+      "title": "ExamCategory",
+      "description": "Odisha state competitive exam catalog",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Category ID e.g. opsc_oas" },
+        "name": { "type": "string", "description": "Exam full name" },
+        "shortCode": { "type": "string", "description": "Short code e.g. OPSC" },
+        "description": { "type": "string", "description": "Syllabus and exam overview" },
+        "totalMocks": { "type": "number", "description": "Available mock count" }
+      },
+      "required": ["id", "name", "shortCode"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Individual student profile records"
+    },
+    "/users/{userId}/mock_results/{resultId}": {
+      "schema": { "$ref": "#/entities/UserMockResult" },
+      "description": "User test submissions and scorecard history"
+    },
+    "/exam_categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/ExamCategory" },
+      "description": "Public catalog of Odisha competitive exam categories"
+    }
+  }
+}

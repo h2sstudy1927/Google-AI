@@ -141,6 +141,9 @@ fun MainAppShell(
       onSignUp = { name, mobile, district, role, onSuccess ->
         viewModel.register(name, mobile, district, role, onSuccess)
       },
+      onGoogleSignIn = { idToken, onSuccess, onError ->
+        viewModel.signInWithGoogleToken(idToken, onSuccess, onError)
+      },
       onAuthenticated = {
         viewModel.navigateTo(Screen.Home)
       }

@@ -57,17 +57,34 @@ import com.example.ui.theme.Slate200
 import com.example.ui.theme.Slate400
 import com.example.ui.theme.Slate600
 import com.example.ui.theme.Slate700
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import com.example.R
 import com.example.ui.theme.Slate800
 import com.example.ui.theme.Slate900
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthGateScreen(
   onSignIn: (String, () -> Unit, (String) -> Unit) -> Unit,
   onSignUp: (String, String, String, String, () -> Unit) -> Unit,
+  onGoogleSignIn: (String, () -> Unit, (String) -> Unit) -> Unit = { _, _, _ -> },
   onAuthenticated: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val context = LocalContext.current
+  val coroutineScope = rememberCoroutineScope()
+  var isGoogleLoading by remember { mutableStateOf(false) }
   var isLoginTab by remember { mutableStateOf(true) }
 
   // Sign In Form State
@@ -163,6 +180,96 @@ fun AuthGateScreen(
               textAlign = TextAlign.Center,
               modifier = Modifier.padding(top = 4.dp)
             )
+          }
+        }
+
+        // Google Sign-In Primary Action
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
+          Button(
+            onClick = {
+              if (isGoogleLoading) return@Button
+              isGoogleLoading = true
+              errorMessage = null
+              coroutineScope.launch {
+                try {
+                  val credentialManager = CredentialManager.create(context)
+                  val webClientId = context.getString(R.string.default_web_client_id)
+                  val signInOption = GetSignInWithGoogleOption.Builder(webClientId)
+                    .build()
+
+                  val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(signInOption)
+                    .build()
+
+                  val result = credentialManager.getCredential(context, request)
+                  val googleIdToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+                  onGoogleSignIn(
+                    googleIdToken,
+                    {
+                      isGoogleLoading = false
+                      onAuthenticated()
+                    },
+                    { err ->
+                      isGoogleLoading = false
+                      errorMessage = err
+                    }
+                  )
+                } catch (e: GetCredentialCancellationException) {
+                  Log.w("AuthGateScreen", "Google Sign-In was cancelled by user.", e)
+                  isGoogleLoading = false
+                } catch (e: Exception) {
+                  Log.e("AuthGateScreen", "Google Sign-In failed", e)
+                  errorMessage = "Google Sign-In: ${e.localizedMessage ?: "Could not complete sign in"}"
+                  isGoogleLoading = false
+                }
+              }
+            },
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(50.dp)
+              .testTag("google_sign_in_btn"),
+            colors = ButtonDefaults.buttonColors(
+              containerColor = Color.White,
+              contentColor = Slate900
+            ),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.5.dp, Color(0xFFCBD5E1)),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+          ) {
+            if (isGoogleLoading) {
+              CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = Purple700,
+                strokeWidth = 2.dp
+              )
+              Spacer(modifier = Modifier.width(10.dp))
+              Text("Connecting Google...", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            } else {
+              Text("G", color = Color(0xFF4285F4), fontWeight = FontWeight.Black, fontSize = 18.sp)
+              Spacer(modifier = Modifier.width(10.dp))
+              Text("Sign in with Google (Cloud Sync)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+          }
+
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Box(modifier = Modifier.weight(1f).height(1.dp).background(Slate200))
+            Text(
+              text = " OR WITH MOBILE / PASSWORD ",
+              fontSize = 10.sp,
+              fontWeight = FontWeight.Bold,
+              color = Slate400,
+              modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            Box(modifier = Modifier.weight(1f).height(1.dp).background(Slate200))
           }
         }
 
