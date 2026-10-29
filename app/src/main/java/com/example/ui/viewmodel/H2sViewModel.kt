@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +17,11 @@ import com.example.data.model.WhiteboardPoint
 import com.example.data.model.WhiteboardStroke
 import com.example.data.local.ExamCategoryEntity
 import com.example.data.repository.H2sRepository
+import com.google.firebase.Firebase
+import com.google.firebase.ai.GenerativeModel
+import com.google.firebase.ai.ai
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,9 +29,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
 sealed interface Screen {
@@ -58,9 +65,15 @@ data class AiChatMessage(
   val timestamp: String = "Just now"
 )
 
+private const val TAG_AI = "H2sAiCoach"
+
 class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   private val repository = H2sRepository.getInstance(application)
+
+  private val generativeModel: GenerativeModel by lazy {
+    Firebase.ai.generativeModel(modelName = "gemini-3.8-flash")
+  }
 
   private val _currentScreen = MutableStateFlow<Screen>(Screen.Home)
   val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
@@ -456,41 +469,100 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
-  // AI Mentor Chat
+  // AI Mentor Chat powered by Gemini 3.8 Flash
   fun sendAiUserMessage(query: String) {
-    val userMsg = AiChatMessage(sender = currentUser.value?.name ?: "You", text = query, isAi = false)
-    _aiChatMessages.value = _aiChatMessages.value + userMsg
+    val trimmed = query.trim()
+    if (trimmed.isBlank()) return
+
+    val userMsg = AiChatMessage(
+      sender = currentUser.value?.name ?: "You",
+      text = trimmed,
+      isAi = false
+    )
+    val loadingMsg = AiChatMessage(
+      sender = "H2S Odisha Exam Coach",
+      text = "Thinking...",
+      isAi = true
+    )
+    _aiChatMessages.value = _aiChatMessages.value + userMsg + loadingMsg
 
     viewModelScope.launch {
-      delay(700)
-      val qLower = query.lowercase(Locale.ROOT)
+      val user = currentUser.value
       val attempt = latestAttempt.value
-      val wrongCount = attempt?.wrongCount ?: 0
-      val penalty = attempt?.penaltyDeducted ?: 0.0
-
-      val reply = when {
-        qLower.contains("improve") || qLower.contains("score") || qLower.contains("osssc") || qLower.contains("opsc") -> {
-          "Strategic Blueprint for Odisha Recruitment Exams:\n" +
-          "1. Contain the 1/4th Penalty: In your last test, you lost ${String.format(Locale.ROOT, "%.2f", penalty)} marks to doubtful guesses. Eliminating 2 options gives a 50% probability; otherwise skipping preserves your rank!\n" +
-          "2. Daily Odia Byakarana Practice: Devote 25 minutes daily to ସନ୍ଧି, ସମାସ, ଏକପଦୀକରଣ, and ବିପରୀତ ଶବ୍ଦ.\n" +
-          "3. Modern Odisha History: Focus on Utkal Sammilani (1903), formation of Odisha (1936), and Salt Satyagraha at Inchudi (1930)."
-        }
-        qLower.contains("wrong") || qLower.contains("mistake") || qLower.contains("penalty") -> {
-          if (wrongCount == 0) {
-            "You had 0 incorrect answers in your recent attempt! Your conceptual foundation in Odisha GK is rock solid."
-          } else {
-            "Analysis of your mistakes:\n" +
-            "• You incurred -$penalty marks in negative penalty.\n" +
-            "• Most errors in Odisha exams arise from subtle spelling variations in Odia (ଶୁଦ୍ଧ ବନାନ) and historical timelines. Practice elimination technique."
-          }
-        }
-        else -> {
-          "In Odisha state examinations (OPSC, OSSC, OSSSC, Teaching), precision in Odia grammar and regional GK separates finalists from the rest. Ask me about any topic or exam strategy!"
-        }
+      val wrongList = attempt?.questionAttempts?.filter { !it.isCorrect && !it.isSkipped } ?: emptyList()
+      val wrongTopicsSummary = wrongList.joinToString(separator = "; ") {
+        "Q${it.questionNumber} (${it.topic}): ${it.question}"
       }
 
-      val aiMsg = AiChatMessage(sender = "H2S Odisha Exam Coach", text = reply, isAi = true)
-      _aiChatMessages.value = _aiChatMessages.value + aiMsg
+      val prompt = buildString {
+        appendLine("You are the H2S STUDY AI Exam Coach & Mentor specializing in Odisha government recruitment exams (OPSC OAS, OSSC CGL/CTS, OSSSC RI/AMIN/Forest Guard, Odisha Teaching Exams, Police SI, etc.).")
+        appendLine("Official marking pattern: +1.0 for correct answers, -0.25 negative marks penalty for incorrect answers.")
+        appendLine()
+        appendLine("Candidate Profile:")
+        appendLine("- Name: ${user?.name ?: "Odisha Aspirant"} (${user?.district ?: "Odisha"})")
+        appendLine("- Recent Mock Test: ${attempt?.testTitle ?: "None Attempted Yet"}")
+        appendLine("- Exam Category: ${attempt?.category ?: "OSSSC"}")
+        appendLine("- Net Score: ${if (attempt != null) String.format(Locale.ROOT, "%.2f", attempt.netScore) else "N/A"}")
+        appendLine("- Accuracy: ${if (attempt != null) "${attempt.accuracyPercent}%" else "N/A"}")
+        appendLine("- Penalty Marks Lost to Guesswork: ${if (attempt != null) String.format(Locale.ROOT, "%.2f pts", attempt.penaltyDeducted) else "0.0 pts"}")
+        if (wrongTopicsSummary.isNotBlank()) {
+          appendLine("- Mistakes in recent test: $wrongTopicsSummary")
+        }
+        appendLine()
+        appendLine("Candidate Query: \"$trimmed\"")
+        appendLine()
+        appendLine("Instructions:")
+        appendLine("1. Provide concise, highly actionable, encouraging coaching advice tailored to Odisha examinations.")
+        appendLine("2. If the query asks about scores, negative marks, or strategy, explain elimination tactics to avoid losing -0.25 marks.")
+        appendLine("3. If the query asks about Odia grammar or Odisha GK, provide clear accurate facts, grammar rules, or historical timelines.")
+        appendLine("4. Format cleanly with bullet points or short paragraphs.")
+      }
+
+      val accumulatedText = StringBuilder()
+      try {
+        withTimeout(60_000L) {
+          generativeModel.generateContentStream(prompt).collect { chunk ->
+            val chunkText = chunk.text.orEmpty()
+            accumulatedText.append(chunkText)
+            val currentList = _aiChatMessages.value.toMutableList()
+            if (currentList.isNotEmpty() && currentList.last().isAi) {
+              currentList[currentList.lastIndex] = currentList.last().copy(
+                text = accumulatedText.toString()
+              )
+              _aiChatMessages.value = currentList
+            }
+          }
+        }
+        if (accumulatedText.isBlank()) {
+          val currentList = _aiChatMessages.value.toMutableList()
+          if (currentList.isNotEmpty() && currentList.last().isAi) {
+            currentList[currentList.lastIndex] = currentList.last().copy(
+              text = "Exam Strategy Insight: Focus on high-frequency Odisha GK topics (rivers, sanctuaries, Utkal Sammilani) and Odia Byakarana rules. Eliminate at least 2 choices before answering to protect your score from -0.25 penalties!"
+            )
+            _aiChatMessages.value = currentList
+          }
+        }
+      } catch (e: TimeoutCancellationException) {
+        Log.e(TAG_AI, "Gemini generation timed out", e)
+        val currentList = _aiChatMessages.value.toMutableList()
+        if (currentList.isNotEmpty() && currentList.last().isAi) {
+          currentList[currentList.lastIndex] = currentList.last().copy(
+            text = "AI Coach request timed out after 60 seconds. Please check your connection and ask again."
+          )
+          _aiChatMessages.value = currentList
+        }
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Log.e(TAG_AI, "Firebase AI generation error", e)
+        val currentList = _aiChatMessages.value.toMutableList()
+        if (currentList.isNotEmpty() && currentList.last().isAi) {
+          currentList[currentList.lastIndex] = currentList.last().copy(
+            text = "AI Coach error: ${e.localizedMessage ?: "Unable to connect to AI Coach. Please try again."}"
+          )
+          _aiChatMessages.value = currentList
+        }
+      }
     }
   }
 
