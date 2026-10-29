@@ -212,4 +212,35 @@ class ExampleRobolectricTest {
     assertEquals(3, com.example.ui.components.GridType.entries.size)
     assertEquals(6, com.example.ui.components.BoardTool.entries.size)
   }
+
+  @Test
+  fun `verify Exam Dashboard Room category and content retrieval`() = runBlocking {
+    val categoryDao = db.examCategoryDao()
+    val testDao = db.mockTestDao()
+
+    categoryDao.insertCategories(PreloadedData.getDefaultCategories())
+    testDao.insertAll(PreloadedData.getDefaultTests().map { MockTestEntity.fromDomain(it) })
+
+    val categories = categoryDao.getAllCategories().first()
+    assertEquals(5, categories.size)
+    val categoryIds = categories.map { it.id }
+    assertTrue(categoryIds.contains("OPSC"))
+    assertTrue(categoryIds.contains("OSSC"))
+    assertTrue(categoryIds.contains("OSSSC"))
+    assertTrue(categoryIds.contains("OUSSSC"))
+    assertTrue(categoryIds.contains("TEACHING"))
+
+    val opscTests = testDao.getTestsByCategory("OPSC").first()
+    assertEquals(1, opscTests.size)
+    assertEquals("OPSC", opscTests.first().categoryId)
+    assertTrue(opscTests.first().title.contains("OPSC", ignoreCase = true))
+
+    val osscTests = testDao.getTestsByCategory("OSSC").first()
+    assertEquals(1, osscTests.size)
+    assertEquals("OSSC", osscTests.first().categoryId)
+
+    val ossscTests = testDao.getTestsByCategory("OSSSC").first()
+    assertEquals(1, ossscTests.size)
+    assertEquals("OSSSC", ossscTests.first().categoryId)
+  }
 }

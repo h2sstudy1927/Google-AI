@@ -84,6 +84,9 @@ fun MainAppShell(
   val liveScore by viewModel.liveScore.collectAsStateWithLifecycle()
   val secondsRemaining by viewModel.secondsRemaining.collectAsStateWithLifecycle()
   val latestAttempt by viewModel.latestAttempt.collectAsStateWithLifecycle()
+  val examCategories by viewModel.examCategories.collectAsStateWithLifecycle()
+  val totalTestsAttempted by viewModel.totalTestsAttempted.collectAsStateWithLifecycle()
+  val averageScore by viewModel.averageScore.collectAsStateWithLifecycle()
 
   val whiteboardStrokes by viewModel.whiteboardStrokes.collectAsStateWithLifecycle()
   val activeStroke by viewModel.activeStroke.collectAsStateWithLifecycle()
@@ -329,10 +332,18 @@ fun MainAppShell(
     ) {
       when (val screen = currentScreen) {
         Screen.Home -> {
-          HomeFoldersScreen(
+          ExamDashboardScreen(
+            categories = examCategories,
+            tests = allTests,
+            currentUser = currentUser,
+            latestAttempt = latestAttempt,
+            totalAttempted = totalTestsAttempted,
+            averageScore = averageScore,
             onSelectCategory = { cat -> viewModel.openFolder(cat) },
+            onAttemptTest = { test -> viewModel.startExam(test) },
             onOpenLiveClass = { viewModel.navigateTo(Screen.LiveClass) },
             onOpenAiMentor = { viewModel.navigateTo(Screen.AiMentor) },
+            onReviewAttempt = { viewModel.navigateTo(Screen.Scorecard) },
             onShowToast = { msg -> viewModel.showToast(msg) }
           )
         }
