@@ -108,6 +108,7 @@ fun MainAppShell(
 
   val showCertificateDialog by viewModel.showCertificateDialog.collectAsStateWithLifecycle()
   val showNotificationsDialog by viewModel.showNotificationsDialog.collectAsStateWithLifecycle()
+  val showCommunityDialog by viewModel.showCommunityDialog.collectAsStateWithLifecycle()
   val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
 
   LaunchedEffect(toastMessage) {
@@ -344,7 +345,8 @@ fun MainAppShell(
             onOpenLiveClass = { viewModel.navigateTo(Screen.LiveClass) },
             onOpenAiMentor = { viewModel.navigateTo(Screen.AiMentor) },
             onReviewAttempt = { viewModel.navigateTo(Screen.Scorecard) },
-            onShowToast = { msg -> viewModel.showToast(msg) }
+            onShowToast = { msg -> viewModel.showToast(msg) },
+            onOpenCommunity = { viewModel.setCommunityDialogVisible(true) }
           )
         }
 
@@ -506,6 +508,13 @@ fun MainAppShell(
       onApprove = { req -> viewModel.approveTeacherRequest(req) },
       onDecline = { req -> viewModel.declineTeacherRequest(req) },
       onDismiss = { viewModel.setNotificationsDialogVisible(false) }
+    )
+  }
+
+  if (showCommunityDialog) {
+    CommunityBatchDialog(
+      onDismiss = { viewModel.setCommunityDialogVisible(false) },
+      onShowToast = { msg -> viewModel.showToast(msg) }
     )
   }
 }

@@ -182,6 +182,9 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   private val _showNotificationsDialog = MutableStateFlow(false)
   val showNotificationsDialog: StateFlow<Boolean> = _showNotificationsDialog.asStateFlow()
 
+  private val _showCommunityDialog = MutableStateFlow(false)
+  val showCommunityDialog: StateFlow<Boolean> = _showCommunityDialog.asStateFlow()
+
   private val _toastMessage = MutableStateFlow<String?>(null)
   val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
@@ -690,6 +693,10 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   fun setNotificationsDialogVisible(visible: Boolean) {
     _showNotificationsDialog.value = visible
+  }
+
+  fun setCommunityDialogVisible(visible: Boolean) {
+    _showCommunityDialog.value = visible
   }
 
   fun showToast(msg: String) {

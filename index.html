@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>H2S STUDY - Odisha State Govt Exams</title>
+  <meta name="description" content="Odisha state competitive exams platform for OPSC, OSSC, OSSSC, Odisha Police, and Teaching exams with mock tests, whiteboard, and study materials." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0F52BA;
+      --primary-dark: #0A387E;
+      --primary-light: #E8F0FE;
+      --accent: #FF7043;
+      --surface: #FFFFFF;
+      --background: #F8FAFC;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --success: #10B981;
+      --radius: 16px;
+      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(15, 82, 186, 0.25);
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1.05rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 1.5rem auto;
+    }
+
+    .cta-container {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 14px rgba(255, 112, 67, 0.4);
+    }
+
+    .btn-accent:hover {
+      background: #f4511e;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-whatsapp {
+      background: #25D366;
+      color: white;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    }
+
+    .btn-telegram {
+      background: #0088cc;
+      color: white;
+      box-shadow: 0 4px 14px rgba(0, 136, 204, 0.35);
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title span {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .grid-folders {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.12);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    /* Mock test interactive preview */
+    .mock-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .quiz-question {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 1.2rem;
+    }
+
+    .option-btn {
+      padding: 12px 16px;
+      background: var(--background);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      text-align: left;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .option-btn.selected-correct {
+      background: #D1FAE5;
+      border-color: #10B981;
+      color: #065F46;
+      font-weight: 600;
+    }
+
+    /* Whiteboard scratchpad */
+    .whiteboard-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .canvas-wrapper {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      background: #FFFFFF;
+      overflow: hidden;
+      margin: 12px 0;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 260px;
+      cursor: crosshair;
+    }
+
+    .wb-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Community Banner */
+    .community-box {
+      background: linear-gradient(135deg, #1E293B, #0F172A);
+      color: white;
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .community-box h2 {
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+
+    .community-box p {
+      color: #94A3B8;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-badge">Target Odisha Govt Exams 2026</div>
+    <h1>H2S STUDY</h1>
+    <p>Comprehensive Study Notes, Syllabus Folders, Real Mock Tests & Whiteboard Problem Solver for OPSC, OSSC, OSSSC & Odisha State Exams.</p>
+    <div class="cta-container">
+      <a href="#mock-section" class="btn btn-accent">Start Free Mock Test</a>
+      <a href="#whiteboard-section" class="btn btn-secondary">Open Whiteboard</a>
+      <a href="https://chat.whatsapp.com/invite" target="_blank" class="btn btn-whatsapp">Join WhatsApp Batch</a>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Exam Categories -->
+    <h2 class="section-title">Exam Folders & Syllabi <span>Live Updates</span></h2>
+    <div class="grid-folders">
+      <div class="card">
+        <div class="card-icon">🏛️</div>
+        <h3>OPSC OAS & ASO</h3>
+        <p>Odisha Civil Services Prelims, Mains General Studies, Odisha History, Geography & Polity.</p>
+        <div class="card-meta">
+          <span>12 Mock Sets</span>
+          <span>View Folder →</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📚</div>
+        <h3>OSSC CGL & CHSL</h3>
+        <p>Combined Graduate Level Prelims, Arithmetic, Reasoning, Odia & English Grammar.</p>
+        <div class="card-meta">
+          <span>18 Mock Sets</span>
+          <span>View Folder →</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>OSSSC RI, AMIN & ICDS</h3>
+        <p>Revenue Inspector & Combined Recruitment Exam special sets, Odia Language & Computer Aptitude.</p>
+        <div class="card-meta">
+          <span>15 Mock Sets</span>
+          <span>View Folder →</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">👮</div>
+        <h3>Odisha Police SI & Constable</h3>
+        <p>General Awareness, Logical Deduction, Physical Efficiency Guide & Odisha GK capsules.</p>
+        <div class="card-meta">
+          <span>10 Mock Sets</span>
+          <span>View Folder →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Mock Test Preview -->
+    <div id="mock-section" class="mock-preview">
+      <h2 class="section-title">Sample Daily Odisha GK Mock <span>Instant Check</span></h2>
+      <div class="quiz-question" id="quiz-question">
+        Q1: In which year was the state of Odisha (Orissa) formed as a separate province?
+      </div>
+      <div class="quiz-options" id="quiz-options">
+        <button class="option-btn" onclick="checkAnswer(this, false)">A) 15 August 1947</button>
+        <button class="option-btn" onclick="checkAnswer(this, true)">B) 1 April 1936 (Utkala Dibasa)</button>
+        <button class="option-btn" onclick="checkAnswer(this, false)">C) 26 January 1950</button>
+        <button class="option-btn" onclick="checkAnswer(this, false)">D) 1 November 1956</button>
+      </div>
+      <div id="answer-feedback" style="display:none; font-weight:600; font-size:0.95rem; margin-top:8px;"></div>
+    </div>
+
+    <!-- Interactive Whiteboard Scratchpad -->
+    <div id="whiteboard-section" class="whiteboard-container">
+      <h2 class="section-title">Interactive Calculation Whiteboard <span>Rough Work</span></h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">
+        Use your mouse or touchscreen to calculate formulas, reasoning diagrams, and math shortcuts.
+      </p>
+      <div class="canvas-wrapper">
+        <canvas id="whiteboard"></canvas>
+      </div>
+      <div class="wb-controls">
+        <button class="btn" style="background:#0F52BA; color:white; padding:8px 16px;" onclick="setColor('#0F52BA')">Blue Pen</button>
+        <button class="btn" style="background:#EF4444; color:white; padding:8px 16px;" onclick="setColor('#EF4444')">Red Pen</button>
+        <button class="btn" style="background:#10B981; color:white; padding:8px 16px;" onclick="setColor('#10B981')">Green Pen</button>
+        <button class="btn" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; padding:8px 16px;" onclick="clearWhiteboard()">Clear Canvas</button>
+      </div>
+    </div>
+
+    <!-- Community & WhatsApp Batch -->
+    <div class="community-box">
+      <h2>Join Official H2S STUDY Aspirant Community</h2>
+      <p>Get daily Odisha current affairs PDFs, exam notification alerts, doubt resolution sessions, and weekly leaderboard rankings.</p>
+      <div class="cta-container">
+        <a href="https://chat.whatsapp.com/invite" target="_blank" class="btn btn-whatsapp">
+          💬 Join WhatsApp Study Group
+        </a>
+        <a href="https://t.me/H2SStudyOfficial" target="_blank" class="btn btn-telegram">
+          ✈️ Join Telegram Channel
+        </a>
+      </div>
+      <div style="margin-top: 1.5rem; font-size: 0.85rem; color: #94A3B8;">
+        Student Helpline: <strong>+91 94370 00000</strong> &bull; Email: <strong>support@h2sstudy.com</strong>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2026 H2S STUDY &bull; Odisha State Competitive Examinations Platform &bull; Made for Aspirants</p>
+    </footer>
+
+  </div>
+
+  <script>
+    // Quiz interactive check
+    function checkAnswer(btn, isCorrect) {
+      const feedback = document.getElementById('answer-feedback');
+      const allButtons = document.querySelectorAll('.option-btn');
+      allButtons.forEach(b => b.classList.remove('selected-correct'));
+
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.style.display = 'block';
+        feedback.style.color = '#10B981';
+        feedback.textContent = 'Correct! Odisha was formed on 1 April 1936 under the British Raj, celebrated every year as Utkala Dibasa.';
+      } else {
+        feedback.style.display = 'block';
+        feedback.style.color = '#EF4444';
+        feedback.textContent = 'Incorrect! Try again. Remember Utkala Dibasa!';
+      }
+    }
+
+    // Whiteboard Canvas
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let currentColor = '#0F52BA';
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = 260;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function setColor(color) {
+      currentColor = color;
+    }
+
+    function clearWhiteboard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function getCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startDraw(e) {
+      drawing = true;
+      const { x, y } = getCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      e.preventDefault();
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+      const { x, y } = getCoords(e);
+      ctx.strokeStyle = currentColor;
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    function stopDraw() {
+      drawing = false;
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDraw);
+
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    window.addEventListener('touchend', stopDraw);
+  </script>
+</body>
+</html>

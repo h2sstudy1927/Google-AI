@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -51,7 +54,8 @@ fun HomeFoldersScreen(
   onOpenLiveClass: () -> Unit,
   onOpenAiMentor: () -> Unit,
   onShowToast: (String) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  onOpenCommunity: (() -> Unit)? = null
 ) {
   val context = LocalContext.current
 
@@ -239,14 +243,18 @@ fun HomeFoldersScreen(
         gradient = listOf(Color(0xFF064E3B), Color(0xFF10B981), Color(0xFF059669)),
         borderColor = Emerald400.copy(alpha = 0.6f),
         onClick = {
-          onShowToast("Opening H2S STUDY WhatsApp Community batch...")
-          try {
-            val intent = Intent(
-              Intent.ACTION_VIEW,
-              Uri.parse("https://api.whatsapp.com/send?text=Join%20H2S%20STUDY%20Odisha%20Govt%20Exams%20Portal")
-            )
-            context.startActivity(intent)
-          } catch (_: Exception) {}
+          if (onOpenCommunity != null) {
+            onOpenCommunity()
+          } else {
+            try {
+              val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+              val clip = ClipData.newPlainText("WhatsApp Group", "https://chat.whatsapp.com/H2SStudyOdishaGovt2026")
+              clipboard.setPrimaryClip(clip)
+              onShowToast("✓ WhatsApp Community link copied to clipboard!")
+            } catch (_: Exception) {
+              onShowToast("H2S WhatsApp: https://chat.whatsapp.com/H2SStudyOdishaGovt2026")
+            }
+          }
         },
         testTag = "folder_card_whatsapp"
       )
