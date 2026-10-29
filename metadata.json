@@ -1,0 +1,6 @@
+{
+  "name": "H2S STUDY",
+  "description": "Odisha state competitive exams platform for OPSC, OSSC, OSSSC, OUSSSC, and Teaching exams with mock tests, AI mentor, and live whiteboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
