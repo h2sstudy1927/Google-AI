@@ -389,6 +389,52 @@ fun AuthGateScreen(
               shape = RoundedCornerShape(14.dp)
             )
 
+            // 1-Tap Quick Demo Credentials
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(10.dp))
+                  .background(Color(0xFFF1F5F9))
+                  .clickable {
+                    loginMobile = "9861012345"
+                    loginPassword = "odisha2026"
+                  }
+                  .padding(vertical = 8.dp, horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = "👤 Candidate (Aarav)",
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Purple700
+                )
+              }
+
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(10.dp))
+                  .background(Color(0xFFFEF3C7))
+                  .clickable {
+                    loginMobile = "8327777148"
+                    loginPassword = "8327777148"
+                  }
+                  .padding(vertical = 8.dp, horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = "👨‍🏫 Faculty (Hemanand)",
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFF92400E)
+                )
+              }
+            }
+
             Button(
               onClick = {
                 if (loginMobile.length != 10) {
