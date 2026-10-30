@@ -400,4 +400,55 @@ class ExampleRobolectricTest {
     assertTrue(fetched?.isAdmin == true)
     assertTrue(com.example.util.SecurityManager.verifyPassword("8327777148", fetched?.password ?: ""))
   }
+
+  @Test
+  fun `verify PdfExporter generates valid PDF document with result breakdown and net score`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+
+    val sampleResult = com.example.data.model.ExamAttemptResult(
+      id = 101L,
+      testId = "mock_opsc_01",
+      testTitle = "OPSC OAS General Studies Full Mock 1",
+      category = "OPSC",
+      candidateName = "Hemanand Hans",
+      candidateDistrict = "Kalahandi",
+      correctCount = 4,
+      wrongCount = 1,
+      skippedCount = 0,
+      penaltyDeducted = 0.25,
+      netScore = 3.75,
+      accuracyPercent = 80,
+      verificationId = "H2S-OD-8327",
+      questionAttempts = listOf(
+        com.example.data.model.QuestionAttempt(
+          questionNumber = 1,
+          question = "Who presided over the first session of Utkal Sammilani in 1903?",
+          topic = "Odisha History",
+          chosenIndex = 0,
+          correctIndex = 0,
+          isCorrect = true,
+          isSkipped = false,
+          explanation = "Maharaja Sriram Chandra Bhanj Deo presided over the first Utkal Sammilani."
+        ),
+        com.example.data.model.QuestionAttempt(
+          questionNumber = 2,
+          question = "Which river forms the boundary between Odisha and West Bengal?",
+          topic = "Odisha Geography",
+          chosenIndex = 2,
+          correctIndex = 1,
+          isCorrect = false,
+          isSkipped = false,
+          explanation = "Subarnarekha flows along the northern border."
+        )
+      )
+    )
+
+    val pdfFile = com.example.util.PdfExporter.exportResultPdf(context, sampleResult)
+
+    assertNotNull(pdfFile)
+    assertTrue("PDF file should exist on device", pdfFile.exists())
+    assertTrue("PDF file should have positive byte size", pdfFile.length() > 500)
+    assertTrue("PDF file should have .pdf extension", pdfFile.name.endsWith(".pdf"))
+    assertTrue("PDF file should contain test title prefix", pdfFile.name.startsWith("H2S_Scorecard_"))
+  }
 }

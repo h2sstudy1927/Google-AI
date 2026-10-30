@@ -456,7 +456,8 @@ fun MainAppShell(
             attempt = latestAttempt,
             onOpenAiMentor = { viewModel.navigateTo(Screen.AiMentor) },
             onViewCertificate = { viewModel.setCertificateDialogVisible(true) },
-            onReturnToCatalog = { viewModel.navigateTo(Screen.Home) }
+            onReturnToCatalog = { viewModel.navigateTo(Screen.Home) },
+            onShowToast = { msg -> viewModel.showToast(msg) }
           )
         }
 

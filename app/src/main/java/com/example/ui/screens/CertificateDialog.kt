@@ -61,6 +61,7 @@ fun CertificateDialog(
   onDismiss: () -> Unit,
   onPrint: () -> Unit
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
   val dateString = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(
     Date(attempt?.timestamp ?: System.currentTimeMillis())
   )
@@ -300,16 +301,40 @@ fun CertificateDialog(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-          onClick = onPrint,
-          colors = ButtonDefaults.buttonColors(containerColor = Purple700),
-          shape = RoundedCornerShape(12.dp),
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .testTag("cert_print_btn")
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          Text("🖨️  Save / Print Certificate", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+          Button(
+            onClick = onPrint,
+            colors = ButtonDefaults.buttonColors(containerColor = Purple700),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+              .weight(1f)
+              .height(44.dp)
+              .testTag("cert_print_btn")
+          ) {
+            Text("🖨️  Save / Print", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+          }
+
+          if (attempt != null) {
+            Button(
+              onClick = {
+                try {
+                  val file = com.example.util.PdfExporter.exportResultPdf(context, attempt)
+                  com.example.util.PdfExporter.shareOrViewPdf(context, file)
+                } catch (_: Exception) {}
+              },
+              colors = ButtonDefaults.buttonColors(containerColor = Emerald700),
+              shape = RoundedCornerShape(12.dp),
+              modifier = Modifier
+                .weight(1f)
+                .height(44.dp)
+                .testTag("cert_export_pdf_btn")
+            ) {
+              Text("📄  Export PDF", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+          }
         }
       }
     }

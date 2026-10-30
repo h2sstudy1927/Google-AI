@@ -824,6 +824,10 @@
               <span>🤖</span>
               <span>Ask AI: What did I do wrong?</span>
             </button>
+            <button id="cardExportPdfBtn" type="button" class="px-5 py-2.5 rounded-xl bg-purple-900 hover:bg-purple-950 text-white font-semibold text-xs md:text-sm shadow-md transition flex items-center gap-2">
+              <span>📄</span>
+              <span>Export PDF Report (Offline)</span>
+            </button>
             <button id="cardViewCertBtn" type="button" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs md:text-sm shadow-md transition flex items-center gap-2">
               <span>📜</span>
               <span>View Certificate</span>
@@ -2495,6 +2499,65 @@
 
     document.getElementById('cardCatalogReturnBtn').addEventListener('click', () => showSection('detail'));
     document.getElementById('cardOpenAiBtn').addEventListener('click', () => showSection('ai'));
+
+    document.getElementById('cardExportPdfBtn').addEventListener('click', () => {
+      const studentName = currentUser ? currentUser.name : 'Aarav Mohanty';
+      const examName = activeTest ? activeTest.title : 'Odisha Govt Exam Mock';
+      const score = examScore.toFixed(2);
+      const correct = examCorrectCount;
+      const wrong = examWrongCount;
+      const penalty = (examWrongCount * 0.25).toFixed(2);
+      const verifyId = `H2S-OD-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      showToast(`Generating PDF Scorecard for ${studentName}...`, 'info');
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${examName} - H2S STUDY Scorecard</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; color: #1e293b; }
+              .header { background: #3b0764; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+              .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+              .grid { display: flex; gap: 15px; margin-bottom: 25px; }
+              .card { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
+              .correct { background: #ecfdf5; color: #047857; }
+              .wrong { background: #fff1f2; color: #e11d48; }
+              .penalty { background: #fef3c7; color: #b45309; }
+              .net { background: #faf5ff; color: #6b21a8; font-weight: bold; }
+              .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 11px; color: #64748b; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2 style="margin: 0;">H2S STUDY • ODISHA GOVT COMPETITIVE EXAMINATIONS</h2>
+              <p style="margin: 5px 0 0; font-size: 13px; color: #ddd6fe;">Official CBT Scorecard & Examination Performance Audit</p>
+            </div>
+            <div class="meta-box">
+              <p><strong>Candidate Name:</strong> ${studentName} &nbsp;|&nbsp; <strong>Exam:</strong> ${examName}</p>
+              <p><strong>Marking Pattern:</strong> +1.00 for Correct Answer, -0.25 Negative Penalty for Incorrect Answer</p>
+              <p><strong>Verification ID:</strong> ${verifyId} &nbsp;|&nbsp; <strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="grid">
+              <div class="card correct"><h3>+${correct}</h3><p>CORRECT (+1.00)</p></div>
+              <div class="card wrong"><h3>${wrong}</h3><p>INCORRECT</p></div>
+              <div class="card penalty"><h3>-${penalty}</h3><p>PENALTY DEDUCTED</p></div>
+              <div class="card net"><h3>${score} pts</h3><p>TOTAL NET SCORE</p></div>
+            </div>
+            <div class="footer">
+              <p>Verified by H2S STUDY • Developer: Hemanand Hans (Kalahandi, Odisha)</p>
+            </div>
+            <script>window.print();<\/script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } else {
+        window.print();
+      }
+    });
 
     // --- CERTIFICATE VIEW CONTROLLER ---
     const cardViewCertBtn = document.getElementById('cardViewCertBtn');

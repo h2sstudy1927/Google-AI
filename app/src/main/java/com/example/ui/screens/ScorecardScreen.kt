@@ -54,8 +54,11 @@ fun ScorecardScreen(
   onOpenAiMentor: () -> Unit,
   onViewCertificate: () -> Unit,
   onReturnToCatalog: () -> Unit,
+  onShowToast: (String) -> Unit = {},
   modifier: Modifier = Modifier
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
+
   if (attempt == null) {
     Box(
       modifier = modifier.fillMaxSize(),
@@ -215,6 +218,31 @@ fun ScorecardScreen(
               text = "📜  View Merit Certificate",
               fontWeight = FontWeight.Bold,
               fontSize = 13.sp
+            )
+          }
+
+          Button(
+            onClick = {
+              try {
+                val file = com.example.util.PdfExporter.exportResultPdf(context, attempt)
+                onShowToast("PDF exported: ${file.name}")
+                com.example.util.PdfExporter.shareOrViewPdf(context, file)
+              } catch (e: Exception) {
+                onShowToast("PDF export failed: ${e.localizedMessage}")
+              }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Purple900),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(48.dp)
+              .testTag("scorecard_export_pdf_btn")
+          ) {
+            Text(
+              text = "📥  Export PDF Report Card (Offline)",
+              fontWeight = FontWeight.Bold,
+              fontSize = 13.sp,
+              color = Color.White
             )
           }
 
