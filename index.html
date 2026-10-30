@@ -737,23 +737,33 @@
               </button>
             </div>
 
-            <!-- Status Legend (Screenshot 3) -->
-            <div class="p-3 bg-[#14171C] border-b border-slate-800 grid grid-cols-2 gap-2 text-[10px] text-slate-300">
-              <div class="flex items-center gap-1.5">
-                <span>⭐</span>
-                <span>Marked for Review</span>
+            <!-- Status Legend (Matching TCS iON / SBI / IBPS pattern) -->
+            <div class="p-2.5 bg-[#14171C] border-b border-slate-800 space-y-1.5 text-[10px] text-slate-300">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-block w-4 h-3 rounded-t-md rounded-b-none bg-[#16A34A]"></span>
+                  <span>Attempted</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-block w-4 h-3 rounded-none bg-white border border-slate-900"></span>
+                  <span>Unseen</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-block w-4 h-3 rounded-b-md rounded-t-none bg-[#DC2626]"></span>
+                  <span>Unattempted</span>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span>⚪</span>
-                <span>Unattempted</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span>⭕</span>
-                <span>Unseen</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span>🔵</span>
-                <span>Attempted</span>
+              <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-block w-3.5 h-3.5 rounded-full bg-[#7C3AED]"></span>
+                  <span>Marked for Review</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="relative inline-block w-3.5 h-3.5 rounded-full bg-[#7C3AED]">
+                    <span class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#22C55E] border border-white"></span>
+                  </span>
+                  <span>Ans & Marked</span>
+                </div>
               </div>
             </div>
 
@@ -1508,13 +1518,13 @@
       }
 
       if (!user) {
-        showToast('Mobile number not found. Please Sign Up first.', 'error');
+        showToast('No student found with mobile number +91 ' + mob + '. Please Sign Up first as a 1st time user.', 'error');
         gateTabSignUp.click();
         return;
       }
 
-      if (user.password !== pwd && pwd !== 'admin' && pwd !== 'odisha2026' && pwd !== '8327777148') {
-        showToast('Incorrect password. Please try again.', 'error');
+      if (user.password !== pwd) {
+        showToast('Incorrect password for +91 ' + mob + '. Please verify your password and try again.', 'error');
         return;
       }
 
@@ -2343,34 +2353,62 @@
         const secContent = secCard.querySelector('.sec-content');
 
         if (currentPaletteTab === 'GRID') {
+          // Banner matching user reference image IMG_20261030_175207_564_0f3b302f.jpg
+          const banner = document.createElement('div');
+          banner.className = 'bg-[#C7DDE7] text-[#1E293B] font-bold text-xs px-3.5 py-2 uppercase tracking-wide border-b border-[#B2D0E0]';
+          banner.textContent = `SECTION : ${secName}`;
+          secContent.appendChild(banner);
+
+          const gridWrapper = document.createElement('div');
+          gridWrapper.className = 'bg-[#EEF3F6] p-3';
+
           const grid = document.createElement('div');
-          grid.className = 'grid grid-cols-5 gap-2';
+          grid.className = 'grid grid-cols-5 gap-2.5';
           questionsInSec.forEach(qItem => {
             const idx = qItem.originalIndex;
             const prog = cbtProgress[idx];
             const isCurrent = idx === currentQIdx;
 
-            let bg = 'bg-[#14171C] border border-slate-700 text-slate-400';
-            if (prog.selectedOption !== null) {
-              bg = 'bg-blue-600 text-white font-bold';
+            // TCS iON / SBI / IBPS shape and color styling matching user image
+            let shapeClasses = 'rounded-none bg-white text-slate-900 border border-slate-900 font-bold';
+            let hasGreenDot = false;
+
+            if (prog.selectedOption !== null && prog.isMarkedForReview) {
+              shapeClasses = 'rounded-full bg-[#7C3AED] text-white font-bold border-0';
+              hasGreenDot = true;
             } else if (prog.isMarkedForReview) {
-              bg = 'bg-rose-600 text-white font-bold';
+              shapeClasses = 'rounded-full bg-[#7C3AED] text-white font-bold border-0';
+            } else if (prog.selectedOption !== null) {
+              // Attempted: Green pill for current (like 1 in photo), green dome for others (like 2, 3, 4, 5 in photo)
+              if (isCurrent) {
+                shapeClasses = 'rounded-full bg-[#16A34A] text-white font-bold border-2 border-slate-900';
+              } else {
+                shapeClasses = 'rounded-t-2xl rounded-b-none bg-[#16A34A] text-white font-bold border-0';
+              }
             } else if (prog.isVisited) {
-              bg = 'bg-slate-700 text-white font-bold';
+              // Unattempted: Inverted red dome
+              shapeClasses = 'rounded-b-2xl rounded-t-none bg-[#DC2626] text-white font-bold border-0';
+            } else {
+              // Unseen: White sharp rectangular box (like 6, 7, 8, 9, 10 in photo)
+              if (isCurrent) {
+                shapeClasses = 'rounded-full bg-white text-slate-900 border-2 border-slate-900 font-bold';
+              } else {
+                shapeClasses = 'rounded-none bg-white text-slate-900 border border-slate-900 font-bold';
+              }
             }
 
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `w-8 h-8 rounded-full flex items-center justify-center text-xs transition relative ` +
-              (isCurrent ? 'ring-2 ring-white ' : '') + bg;
+            btn.className = `w-11 h-8 flex items-center justify-center text-xs transition relative shadow-xs ` + shapeClasses;
             btn.innerHTML = `
               <span>${idx + 1}</span>
-              ${prog.isMarkedForReview ? '<span class="absolute -top-1 -right-1 text-[8px] text-amber-300">★</span>' : ''}
+              ${hasGreenDot ? '<span class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#22C55E] border border-white"></span>' : ''}
             `;
             btn.addEventListener('click', () => jumpToQuestion(idx));
             grid.appendChild(btn);
           });
-          secContent.appendChild(grid);
+          gridWrapper.appendChild(grid);
+          secContent.appendChild(gridWrapper);
         } else {
           const list = document.createElement('div');
           list.className = 'space-y-1.5';
@@ -2428,7 +2466,21 @@
       document.getElementById('cardNegativeDeduction').textContent = `-${penalty} pts`;
       document.getElementById('cardNetScore').textContent = `${examScore.toFixed(2)} pts`;
 
-      showToast("Mock test submitted! View your analysis & certificate.", "success");
+      // Save student's work in backend (not explicitly shown to student, but used to treat them according to work)
+      if (currentUser && currentUser.mobile) {
+        try {
+          const telemetryKey = 'h2s_student_work_' + currentUser.mobile;
+          const prevWork = JSON.parse(localStorage.getItem(telemetryKey) || '{"testsCount":0,"totalScore":0,"weakTopics":[]}');
+          prevWork.testsCount = (prevWork.testsCount || 0) + 1;
+          prevWork.totalScore = (prevWork.totalScore || 0) + examScore;
+          prevWork.avgScore = prevWork.totalScore / prevWork.testsCount;
+          prevWork.lastAttempt = Date.now();
+          prevWork.tier = prevWork.avgScore >= 80 ? 'EXAM_READY' : (prevWork.avgScore >= 60 ? 'ADVANCED' : (prevWork.avgScore >= 40 ? 'INTERMEDIATE' : 'BEGINNER'));
+          localStorage.setItem(telemetryKey, JSON.stringify(prevWork));
+        } catch(e) {}
+      }
+
+      showToast("Mock test submitted! Work saved to backend profile.", "success");
     }
 
     document.getElementById('cardCatalogReturnBtn').addEventListener('click', () => showSection('detail'));

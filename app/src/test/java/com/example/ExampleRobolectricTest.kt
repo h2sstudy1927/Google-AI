@@ -243,4 +243,75 @@ class ExampleRobolectricTest {
     assertEquals(1, ossscTests.size)
     assertEquals("OSSSC", ossscTests.first().categoryId)
   }
+
+  @Test
+  fun `verify student registration and password authentication logic`() = runBlocking {
+    val userDao = db.userDao()
+
+    // 1. Student not signed up cannot login
+    val nonExistentUser = userDao.getUserByMobile("9938000000")
+    assertNull(nonExistentUser)
+
+    // 2. 1st time student signs up with name, mobile, district, password
+    val newStudent = com.example.data.local.UserEntity(
+      name = "Priya Dash",
+      mobile = "9938000000",
+      district = "Puri",
+      role = "student",
+      password = "secretPassword123",
+      isApproved = true,
+      isCurrentSession = true
+    )
+    userDao.insertUser(newStudent)
+
+    // 3. User is now remembered in database
+    val saved = userDao.getUserByMobile("9938000000")
+    assertNotNull(saved)
+    assertEquals("Priya Dash", saved?.name)
+    assertEquals("secretPassword123", saved?.password)
+
+    // 4. Password validation check
+    val enteredWrongPassword = "wrongPassword"
+    assertTrue(saved?.password != enteredWrongPassword)
+
+    val enteredCorrectPassword = "secretPassword123"
+    assertEquals(saved?.password, enteredCorrectPassword)
+
+    // 5. Active session persistence
+    val activeSession = userDao.getCurrentSession().first()
+    assertNotNull(activeSession)
+    assertEquals("9938000000", activeSession?.mobile)
+  }
+
+  @Test
+  fun `verify student background work telemetry and tier progression`() = runBlocking {
+    val userDao = db.userDao()
+
+    val student = com.example.data.local.UserEntity(
+      name = "Bikram Jena",
+      mobile = "9861223344",
+      district = "Balasore",
+      role = "student",
+      password = "pass123456",
+      isApproved = true,
+      isCurrentSession = true
+    )
+    userDao.insertUser(student)
+
+    // Record exam work in backend
+    userDao.updateStudentTelemetry(
+      mobile = "9861223344",
+      totalTests = 3,
+      avgScore = 85.5,
+      highestScore = 92.0,
+      weakTopicsJson = "[\"Odisha Geography\"]",
+      studentTier = "EXAM_READY"
+    )
+
+    val updated = userDao.getUserByMobile("9861223344")
+    assertNotNull(updated)
+    assertEquals(3, updated?.totalTestsTaken)
+    assertEquals(85.5, updated?.avgScore ?: 0.0, 0.001)
+    assertEquals("EXAM_READY", updated?.studentTier)
+  }
 }

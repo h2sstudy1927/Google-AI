@@ -235,7 +235,7 @@ data class UserResultEntity(
 }
 
 /**
- * Entity for Local User Session and Roles.
+ * Entity for Local User Session, Credentials, and Background Work Telemetry.
  */
 @Entity(tableName = "users")
 data class UserEntity(
@@ -243,9 +243,18 @@ data class UserEntity(
   val name: String,
   val district: String,
   val role: String,
+  val password: String = "",
   val isApproved: Boolean = true,
   val isAdmin: Boolean = false,
-  val isCurrentSession: Boolean = false
+  val isCurrentSession: Boolean = false,
+  val createdAt: Long = System.currentTimeMillis(),
+  // Background student work tracking (saved in backend to tailor treatment according to student's work)
+  val totalTestsTaken: Int = 0,
+  val avgScore: Double = 0.0,
+  val highestScore: Double = 0.0,
+  val weakTopicsJson: String = "[]",
+  val studentTier: String = "BEGINNER",
+  val lastActiveTimestamp: Long = System.currentTimeMillis()
 ) {
   fun toDomain(): UserSession = UserSession(
     name = name,
@@ -253,7 +262,8 @@ data class UserEntity(
     district = district,
     role = role,
     isApproved = isApproved,
-    isAdmin = isAdmin
+    isAdmin = isAdmin,
+    studentTier = studentTier
   )
 }
 

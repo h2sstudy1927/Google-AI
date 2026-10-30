@@ -138,7 +138,8 @@ data class UserSession(
   val district: String,
   val role: String, // "student" or "teacher"
   val isApproved: Boolean = true,
-  val isAdmin: Boolean = false
+  val isAdmin: Boolean = false,
+  val studentTier: String = "BEGINNER"
 )
 
 data class TeacherApprovalRequest(

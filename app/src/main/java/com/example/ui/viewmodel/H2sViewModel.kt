@@ -86,6 +86,10 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     Firebase.ai.generativeModel(modelName = "gemini-3.8-flash")
   }
 
+  private val authPrefs = application.getSharedPreferences("h2s_auth_prefs", android.content.Context.MODE_PRIVATE)
+  val rememberedMobile = MutableStateFlow(authPrefs.getString("remembered_mobile", "") ?: "")
+  val rememberedPassword = MutableStateFlow(authPrefs.getString("remembered_password", "") ?: "")
+
   private val _currentScreen = MutableStateFlow<Screen>(Screen.Home)
   val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
 
@@ -266,16 +270,6 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   init {
     viewModelScope.launch {
       repository.initializeDatabaseIfEmpty()
-      // Auto-sign in default student demo if no session exists yet
-      val session = repository.signIn("9861012345")
-      if (session == null) {
-        repository.register(
-          name = "Aarav Mohanty",
-          mobile = "9861012345",
-          district = "Cuttack",
-          role = "student"
-        )
-      }
     }
   }
 
@@ -640,8 +634,13 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
       questionAttempts = attempts
     )
 
+    val weakTopics = attempts.filter { !it.isCorrect && !it.isSkipped }.map { it.topic }.distinct()
+
     viewModelScope.launch {
       repository.saveAttempt(result)
+      user?.let { u ->
+        repository.recordStudentWork(u.mobile, netScore, weakTopics)
+      }
       try {
         if (firebaseAuth.currentUser != null) {
           val timeElapsed = (test.durationMinutes * 60L) - _secondsRemaining.value
@@ -861,16 +860,35 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   // User Auth & Teacher Requests
-  fun signIn(mobile: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+  fun signIn(
+    mobile: String,
+    password: String,
+    remember: Boolean = true,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+  ) {
     viewModelScope.launch {
-      val user = repository.signIn(mobile)
-      if (user != null) {
+      val res = repository.authenticateStudent(mobile, password)
+      res.onSuccess { user ->
+        if (remember) {
+          authPrefs.edit()
+            .putString("remembered_mobile", mobile)
+            .putString("remembered_password", password)
+            .apply()
+          rememberedMobile.value = mobile
+          rememberedPassword.value = password
+        }
         showToast("Welcome back, ${user.name}!")
         onSuccess()
-      } else {
-        onError("Mobile number not registered. Please sign up.")
+      }.onFailure { ex ->
+        onError(ex.message ?: "Authentication failed")
       }
     }
+  }
+
+  // Backward compatibility alias
+  fun signIn(mobile: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    signIn(mobile, "", true, onSuccess, onError)
   }
 
   fun register(
@@ -878,17 +896,41 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     mobile: String,
     district: String,
     role: String,
-    onSuccess: () -> Unit
+    password: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit = {}
   ) {
     viewModelScope.launch {
-      val user = repository.register(name, mobile, district, role)
-      if (role == "teacher") {
-        showToast("Teacher request submitted for admin approval! Candidate access granted.")
-      } else {
-        showToast("Welcome, ${user.name}! Permanent instant access active.")
+      val res = repository.registerStudent(name, mobile, district, role, password)
+      res.onSuccess { user ->
+        authPrefs.edit()
+          .putString("remembered_mobile", mobile)
+          .putString("remembered_password", password)
+          .apply()
+        rememberedMobile.value = mobile
+        rememberedPassword.value = password
+
+        if (role == "teacher") {
+          showToast("Teacher request submitted for admin approval! Candidate access granted.")
+        } else {
+          showToast("Welcome to H2S STUDY, ${user.name}!")
+        }
+        onSuccess()
+      }.onFailure { ex ->
+        onError(ex.message ?: "Registration failed")
       }
-      onSuccess()
     }
+  }
+
+  // Backward compatibility alias
+  fun register(
+    name: String,
+    mobile: String,
+    district: String,
+    role: String,
+    onSuccess: () -> Unit
+  ) {
+    register(name, mobile, district, role, "", onSuccess, {})
   }
 
   fun signInWithGoogleToken(

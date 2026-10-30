@@ -40,9 +40,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,8 +80,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthGateScreen(
-  onSignIn: (String, () -> Unit, (String) -> Unit) -> Unit,
-  onSignUp: (String, String, String, String, () -> Unit) -> Unit,
+  initialMobile: String = "",
+  initialPassword: String = "",
+  onSignIn: (mobile: String, password: String, remember: Boolean, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit,
+  onSignUp: (name: String, mobile: String, district: String, role: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) -> Unit,
   onGoogleSignIn: (String, () -> Unit, (String) -> Unit) -> Unit = { _, _, _ -> },
   onAuthenticated: () -> Unit,
   modifier: Modifier = Modifier
@@ -87,16 +93,19 @@ fun AuthGateScreen(
   var isGoogleLoading by remember { mutableStateOf(false) }
   var isLoginTab by remember { mutableStateOf(true) }
 
-  // Sign In Form State
-  var loginMobile by remember { mutableStateOf("9861012345") }
-  var loginPassword by remember { mutableStateOf("odisha2026") }
+  // Sign In Form State with auto-remembered credentials
+  var loginMobile by remember { mutableStateOf(initialMobile.ifBlank { "9861012345" }) }
+  var loginPassword by remember { mutableStateOf(initialPassword.ifBlank { "odisha2026" }) }
+  var rememberCredentials by remember { mutableStateOf(true) }
+  var isLoginPasswordVisible by remember { mutableStateOf(false) }
 
-  // Sign Up Form State
+  // Sign Up Form State (1st time user)
   var suName by remember { mutableStateOf("") }
   var suMobile by remember { mutableStateOf("") }
   var suDistrict by remember { mutableStateOf("Kalahandi") }
   var suRole by remember { mutableStateOf("student") }
   var suPassword by remember { mutableStateOf("") }
+  var isSuPasswordVisible by remember { mutableStateOf(false) }
 
   var districtExpanded by remember { mutableStateOf(false) }
   var roleExpanded by remember { mutableStateOf(false) }
@@ -376,7 +385,12 @@ fun AuthGateScreen(
               onValueChange = { loginPassword = it },
               label = { Text("Password") },
               placeholder = { Text("Enter your password") },
-              visualTransformation = PasswordVisualTransformation(),
+              visualTransformation = if (isLoginPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+              trailingIcon = {
+                IconButton(onClick = { isLoginPasswordVisible = !isLoginPasswordVisible }) {
+                  Text(if (isLoginPasswordVisible) "👁" else "🔒", fontSize = 14.sp)
+                }
+              },
               keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
               singleLine = true,
               modifier = Modifier
@@ -388,6 +402,29 @@ fun AuthGateScreen(
               ),
               shape = RoundedCornerShape(14.dp)
             )
+
+            // Remember Credentials Checkbox
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { rememberCredentials = !rememberCredentials }
+                .padding(vertical = 2.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Checkbox(
+                checked = rememberCredentials,
+                onCheckedChange = { rememberCredentials = it },
+                colors = CheckboxDefaults.colors(checkedColor = Purple700)
+              )
+              Spacer(modifier = Modifier.width(4.dp))
+              Text(
+                text = "Remember my credentials for later log in",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = Slate700
+              )
+            }
 
             // 1-Tap Quick Demo Credentials
             Row(
@@ -441,8 +478,15 @@ fun AuthGateScreen(
                   errorMessage = "Please enter a valid 10-digit mobile number."
                   return@Button
                 }
+                if (loginPassword.isBlank()) {
+                  errorMessage = "Please enter your password."
+                  return@Button
+                }
+                errorMessage = null
                 onSignIn(
-                  loginMobile,
+                  loginMobile.trim(),
+                  loginPassword,
+                  rememberCredentials,
                   { onAuthenticated() },
                   { err -> errorMessage = err }
                 )
@@ -580,7 +624,12 @@ fun AuthGateScreen(
               onValueChange = { suPassword = it },
               label = { Text("Create Password") },
               placeholder = { Text("At least 6 characters") },
-              visualTransformation = PasswordVisualTransformation(),
+              visualTransformation = if (isSuPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+              trailingIcon = {
+                IconButton(onClick = { isSuPasswordVisible = !isSuPasswordVisible }) {
+                  Text(if (isSuPasswordVisible) "👁" else "🔒", fontSize = 14.sp)
+                }
+              },
               keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
               singleLine = true,
               modifier = Modifier
@@ -607,14 +656,16 @@ fun AuthGateScreen(
                   errorMessage = "Password must be at least 6 characters."
                   return@Button
                 }
+                errorMessage = null
                 onSignUp(
                   suName.trim(),
                   suMobile.trim(),
                   suDistrict,
-                  suRole
-                ) {
-                  onAuthenticated()
-                }
+                  suRole,
+                  suPassword,
+                  { onAuthenticated() },
+                  { err -> errorMessage = err }
+                )
               },
               modifier = Modifier
                 .fillMaxWidth()

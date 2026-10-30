@@ -146,14 +146,19 @@ fun MainAppShell(
   val pendingReqCount = approvalRequests.count { it.status == "pending" }
   val isExamMode = currentScreen is Screen.ExamHall || currentScreen is Screen.ExamInstructions
 
+  val rememberedMobile by viewModel.rememberedMobile.collectAsStateWithLifecycle()
+  val rememberedPassword by viewModel.rememberedPassword.collectAsStateWithLifecycle()
+
   // Auth gate if signed out
   if (currentUser == null || currentScreen == Screen.Auth) {
     AuthGateScreen(
-      onSignIn = { mobile, onSuccess, onError ->
-        viewModel.signIn(mobile, onSuccess, onError)
+      initialMobile = rememberedMobile,
+      initialPassword = rememberedPassword,
+      onSignIn = { mobile, password, remember, onSuccess, onError ->
+        viewModel.signIn(mobile, password, remember, onSuccess, onError)
       },
-      onSignUp = { name, mobile, district, role, onSuccess ->
-        viewModel.register(name, mobile, district, role, onSuccess)
+      onSignUp = { name, mobile, district, role, password, onSuccess, onError ->
+        viewModel.register(name, mobile, district, role, password, onSuccess, onError)
       },
       onGoogleSignIn = { idToken, onSuccess, onError ->
         viewModel.signInWithGoogleToken(idToken, onSuccess, onError)

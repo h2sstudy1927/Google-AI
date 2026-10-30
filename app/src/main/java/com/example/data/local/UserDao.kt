@@ -28,4 +28,18 @@ interface UserDao {
 
   @Query("UPDATE users SET role = 'teacher', isApproved = 1 WHERE mobile = :mobile")
   suspend fun approveTeacher(mobile: String)
+
+  @Query("SELECT * FROM users")
+  suspend fun getAllUsers(): List<UserEntity>
+
+  @Query("UPDATE users SET totalTestsTaken = :totalTests, avgScore = :avgScore, highestScore = :highestScore, weakTopicsJson = :weakTopicsJson, studentTier = :studentTier, lastActiveTimestamp = :lastActive WHERE mobile = :mobile")
+  suspend fun updateStudentTelemetry(
+    mobile: String,
+    totalTests: Int,
+    avgScore: Double,
+    highestScore: Double,
+    weakTopicsJson: String,
+    studentTier: String,
+    lastActive: Long = System.currentTimeMillis()
+  )
 }

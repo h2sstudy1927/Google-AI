@@ -102,7 +102,7 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       testDao.insertAll(defaultEntities)
     }
 
-    // 3. Default faculty/admin user if none exists
+    // 3. Default faculty/admin and demo student user
     val admin = userDao.getUserByMobile("8327777148")
     if (admin == null) {
       userDao.insertUser(
@@ -111,8 +111,25 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
           mobile = "8327777148",
           district = "Kalahandi",
           role = "teacher",
+          password = "8327777148",
           isApproved = true,
           isAdmin = true,
+          isCurrentSession = false
+        )
+      )
+    }
+
+    val demoStudent = userDao.getUserByMobile("9861012345")
+    if (demoStudent == null) {
+      userDao.insertUser(
+        UserEntity(
+          name = "Aarav Mohanty",
+          mobile = "9861012345",
+          district = "Cuttack",
+          role = "student",
+          password = "odisha2026",
+          isApproved = true,
+          isAdmin = false,
           isCurrentSession = false
         )
       )
@@ -255,6 +272,20 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
     return userDao.getCurrentSession().map { it?.toDomain() }
   }
 
+  suspend fun authenticateStudent(mobile: String, password: String): Result<UserSession> {
+    val user = userDao.getUserByMobile(mobile)
+      ?: return Result.failure(Exception("No account found with mobile number +91 $mobile. Please Sign Up first as a 1st time user."))
+
+    if (user.password.isNotBlank() && password.isNotBlank() && user.password != password) {
+      return Result.failure(Exception("Incorrect password for +91 $mobile. Please check your password and try again."))
+    }
+
+    userDao.clearActiveSessions()
+    userDao.setActiveSession(mobile)
+    return Result.success(user.toDomain())
+  }
+
+  // Backward compatibility alias
   suspend fun signIn(mobile: String): UserSession? {
     val user = userDao.getUserByMobile(mobile) ?: return null
     userDao.clearActiveSessions()
@@ -262,12 +293,18 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
     return user.toDomain()
   }
 
-  suspend fun register(
+  suspend fun registerStudent(
     name: String,
     mobile: String,
     district: String,
-    role: String
-  ): UserSession {
+    role: String,
+    password: String = ""
+  ): Result<UserSession> {
+    val existing = userDao.getUserByMobile(mobile)
+    if (existing != null) {
+      return Result.failure(Exception("Mobile +91 $mobile is already registered. Please go to Sign In and enter your password."))
+    }
+
     val isTeacher = role == "teacher"
     val assignedRole = if (isTeacher) "student" else "student"
     val isApproved = !isTeacher
@@ -277,9 +314,11 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       mobile = mobile,
       district = district,
       role = assignedRole,
+      password = password,
       isApproved = isApproved,
       isAdmin = false,
-      isCurrentSession = true
+      isCurrentSession = true,
+      createdAt = System.currentTimeMillis()
     )
     userDao.clearActiveSessions()
     userDao.insertUser(userEntity)
@@ -297,7 +336,57 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       _approvalRequests.value = listOf(newReq) + _approvalRequests.value
     }
 
-    return userEntity.toDomain()
+    return Result.success(userEntity.toDomain())
+  }
+
+  // Backward compatibility alias
+  suspend fun register(
+    name: String,
+    mobile: String,
+    district: String,
+    role: String
+  ): UserSession {
+    val res = registerStudent(name, mobile, district, role, "")
+    return res.getOrElse {
+      userDao.getUserByMobile(mobile)?.toDomain() ?: UserSession(name, mobile, district, role)
+    }
+  }
+
+  suspend fun recordStudentWork(mobile: String, netScore: Double, weakTopics: List<String>) {
+    val user = userDao.getUserByMobile(mobile) ?: return
+    val newTotal = user.totalTestsTaken + 1
+    val newAvg = if (newTotal > 1) {
+      ((user.avgScore * user.totalTestsTaken) + netScore) / newTotal
+    } else {
+      netScore
+    }
+    val newHighest = maxOf(user.highestScore, netScore)
+    val tier = when {
+      newAvg >= 80.0 -> "EXAM_READY"
+      newAvg >= 60.0 -> "ADVANCED"
+      newAvg >= 40.0 -> "INTERMEDIATE"
+      else -> "BEGINNER"
+    }
+
+    val existingWeak = try {
+      val arr = org.json.JSONArray(user.weakTopicsJson)
+      val list = mutableListOf<String>()
+      for (i in 0 until arr.length()) list.add(arr.getString(i))
+      list
+    } catch (_: Exception) {
+      mutableListOf<String>()
+    }
+    val combinedWeak = (existingWeak + weakTopics).distinct().take(10)
+    val weakJson = org.json.JSONArray(combinedWeak).toString()
+
+    userDao.updateStudentTelemetry(
+      mobile = mobile,
+      totalTests = newTotal,
+      avgScore = newAvg,
+      highestScore = newHighest,
+      weakTopicsJson = weakJson,
+      studentTier = tier
+    )
   }
 
   suspend fun signOut() {

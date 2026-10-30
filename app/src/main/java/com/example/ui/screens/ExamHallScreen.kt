@@ -703,20 +703,53 @@ fun ExamHallScreen(
 
           HorizontalDivider(color = CardBorder, thickness = 1.dp)
 
-          // Status Legend (Screenshot 3)
-          // ⭐ Marked for Review | ⚪ Unattempted | ⭕ Unseen | 🔵 Attempted
-          Row(
+          // Status Legend (Matching TCS iON / SBI / IBPS pattern)
+          Column(
             modifier = Modifier
               .fillMaxWidth()
               .background(Color(0xFF14171C))
-              .padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+              .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
           ) {
-            LegendItem(icon = "⭐", label = "Marked for Review", color = StarYellow)
-            LegendItem(icon = "⚪", label = "Unattempted", color = UnattemptedGrey)
-            LegendItem(icon = "⭕", label = "Unseen", color = TextMuted)
-            LegendItem(icon = "🔵", label = "Attempted", color = BluePrimary)
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              TcsLegendBadge(
+                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 0.dp, bottomEnd = 0.dp),
+                bg = Color(0xFF16A34A),
+                label = "Attempted"
+              )
+              TcsLegendBadge(
+                shape = RoundedCornerShape(0.dp),
+                bg = Color.White,
+                border = Color(0xFF1E293B),
+                label = "Unseen"
+              )
+              TcsLegendBadge(
+                shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 8.dp, bottomEnd = 8.dp),
+                bg = Color(0xFFDC2626),
+                label = "Unattempted"
+              )
+            }
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              TcsLegendBadge(
+                shape = CircleShape,
+                bg = Color(0xFF7C3AED),
+                label = "Marked for Review"
+              )
+              TcsLegendBadge(
+                shape = CircleShape,
+                bg = Color(0xFF7C3AED),
+                label = "Ans & Marked",
+                hasGreenDot = true
+              )
+            }
           }
 
           HorizontalDivider(color = CardBorder, thickness = 1.dp)
@@ -798,65 +831,52 @@ fun ExamHallScreen(
                     HorizontalDivider(color = CardBorder.copy(alpha = 0.5f))
 
                     if (paletteTab == "GRID") {
-                      // Grid of Circular question numbers
-                      FlowRow(
-                        modifier = Modifier
-                          .fillMaxWidth()
-                          .padding(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                      ) {
-                        sectionQuestions.forEach { (qIdx, _) ->
-                          val prog = cbtProgress[qIdx] ?: CbtQuestionProgress(qIdx)
-                          val isCurrent = qIdx == questionIndex
-                          val status = prog.status
+                      Column(modifier = Modifier.fillMaxWidth()) {
+                        // SECTION Header Banner (Pale cyan/blue banner matching user reference image IMG_20261030_175207_564_0f3b302f.jpg)
+                        Box(
+                          modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFC7DDE7))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                          Text(
+                            text = "SECTION : ${sectionName.uppercase(Locale.ROOT)}",
+                            color = Color(0xFF1E293B),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                          )
+                        }
 
-                          val circleBg = when (status) {
-                            CbtQuestionStatus.ATTEMPTED -> BluePrimary
-                            CbtQuestionStatus.ATTEMPTED_AND_MARKED -> BluePrimary
-                            CbtQuestionStatus.MARKED_FOR_REVIEW -> StarRose
-                            CbtQuestionStatus.UNATTEMPTED -> UnattemptedGrey
-                            CbtQuestionStatus.UNSEEN -> Color(0xFF14171C)
-                          }
-
-                          val borderStroke = when {
-                            isCurrent -> 2.dp
-                            status == CbtQuestionStatus.UNSEEN -> 1.dp
-                            status == CbtQuestionStatus.ATTEMPTED_AND_MARKED -> 2.dp
-                            else -> 0.dp
-                          }
-
-                          val borderColor = when {
-                            isCurrent -> Color.White
-                            status == CbtQuestionStatus.ATTEMPTED_AND_MARKED -> StarYellow
-                            status == CbtQuestionStatus.UNSEEN -> UnseenBorder
-                            else -> Color.Transparent
-                          }
-
-                          Box(
-                            modifier = Modifier
-                              .size(36.dp)
-                              .clip(CircleShape)
-                              .background(circleBg)
-                              .border(borderStroke, borderColor, CircleShape)
-                              .clickable { onJumpToQuestion(qIdx) },
-                            contentAlignment = Alignment.Center
-                          ) {
-                            Text(
-                              text = "${qIdx + 1}",
-                              color = if (status == CbtQuestionStatus.UNSEEN) TextMuted else Color.White,
-                              fontSize = 12.sp,
-                              fontWeight = FontWeight.Bold
-                            )
-                            if (status == CbtQuestionStatus.ATTEMPTED_AND_MARKED || status == CbtQuestionStatus.MARKED_FOR_REVIEW) {
-                              Text(
-                                text = "★",
-                                color = StarYellow,
-                                fontSize = 8.sp,
-                                modifier = Modifier
-                                  .align(Alignment.TopEnd)
-                                  .padding(top = 1.dp, end = 2.dp)
-                              )
+                        // Grid of 5-column questions with authentic TCS iON shapes on light background
+                        Column(
+                          modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFEEF3F6))
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                          verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                          val rows = sectionQuestions.chunked(5)
+                          rows.forEach { rowQuestions ->
+                            Row(
+                              modifier = Modifier.fillMaxWidth(),
+                              horizontalArrangement = Arrangement.SpaceBetween,
+                              verticalAlignment = Alignment.CenterVertically
+                            ) {
+                              rowQuestions.forEach { (qIdx, _) ->
+                                val prog = cbtProgress[qIdx] ?: CbtQuestionProgress(qIdx)
+                                val isCurrent = qIdx == questionIndex
+                                CbtGridBadge(
+                                  questionNumber = qIdx + 1,
+                                  status = prog.status,
+                                  isCurrent = isCurrent,
+                                  onClick = { onJumpToQuestion(qIdx) }
+                                )
+                              }
+                              // Fill remaining slots in last row to maintain strict 5-column grid alignment
+                              repeat(5 - rowQuestions.size) {
+                                Spacer(modifier = Modifier.width(46.dp))
+                              }
                             }
                           }
                         }
@@ -1213,6 +1233,136 @@ private fun MiniStatBadge(icon: String, count: Int, bg: Color) {
         color = Color.White,
         fontSize = 9.sp,
         fontWeight = FontWeight.Bold
+      )
+    }
+  }
+}
+
+@Composable
+private fun TcsLegendBadge(
+  shape: androidx.compose.ui.graphics.Shape,
+  bg: Color,
+  border: Color = Color.Transparent,
+  label: String,
+  hasGreenDot: Boolean = false
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(4.dp)
+  ) {
+    Box(
+      modifier = Modifier
+        .size(16.dp, 12.dp)
+        .clip(shape)
+        .background(bg)
+        .then(if (border != Color.Transparent) Modifier.border(1.dp, border, shape) else Modifier)
+    ) {
+      if (hasGreenDot) {
+        Box(
+          modifier = Modifier
+            .size(4.dp)
+            .align(Alignment.BottomEnd)
+            .background(Color(0xFF22C55E), CircleShape)
+        )
+      }
+    }
+    Text(
+      text = label,
+      color = Color(0xFFCBD5E1),
+      fontSize = 10.sp,
+      fontWeight = FontWeight.Medium
+    )
+  }
+}
+
+@Composable
+fun CbtGridBadge(
+  questionNumber: Int,
+  status: CbtQuestionStatus,
+  isCurrent: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  // TCS iON / SBI / IBPS shape and color mapping matching user uploaded image IMG_20261030_175207_564_0f3b302f.jpg
+  val shape = when {
+    isCurrent && (status == CbtQuestionStatus.ATTEMPTED || status == CbtQuestionStatus.ATTEMPTED_AND_MARKED) -> {
+      // Pill shape for active answered like '1' in user photo
+      RoundedCornerShape(50)
+    }
+    status == CbtQuestionStatus.ATTEMPTED -> {
+      // Dome / arch shape (arched top, flat bottom) like '2', '3', '4', '5' in user photo
+      RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+    }
+    status == CbtQuestionStatus.UNATTEMPTED -> {
+      // Inverted dome shape (flat top, curved bottom)
+      RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
+    }
+    status == CbtQuestionStatus.UNSEEN -> {
+      // Crisp rectangular box with sharp 90-degree corners like '6', '7', '8', '9', '10' in user photo
+      RoundedCornerShape(0.dp)
+    }
+    status == CbtQuestionStatus.MARKED_FOR_REVIEW || status == CbtQuestionStatus.ATTEMPTED_AND_MARKED -> {
+      CircleShape
+    }
+    else -> {
+      if (isCurrent) RoundedCornerShape(50) else RoundedCornerShape(0.dp)
+    }
+  }
+
+  val backgroundColor = when (status) {
+    CbtQuestionStatus.ATTEMPTED -> Color(0xFF16A34A) // Bright vivid green (like 1, 2, 3, 4, 5 in user photo)
+    CbtQuestionStatus.UNATTEMPTED -> Color(0xFFDC2626) // Vivid red
+    CbtQuestionStatus.UNSEEN -> Color.White // Pure white box (like 6, 7, 8, 9, 10 in user photo)
+    CbtQuestionStatus.MARKED_FOR_REVIEW -> Color(0xFF7C3AED) // Purple circle
+    CbtQuestionStatus.ATTEMPTED_AND_MARKED -> Color(0xFF7C3AED) // Purple circle
+  }
+
+  val textColor = when (status) {
+    CbtQuestionStatus.UNSEEN -> Color(0xFF0F172A) // Dark bold text on white box
+    else -> Color.White // White bold text
+  }
+
+  val borderStroke = when {
+    isCurrent -> 2.dp
+    status == CbtQuestionStatus.UNSEEN -> 1.dp
+    else -> 0.dp
+  }
+
+  val borderColor = when {
+    isCurrent -> Color(0xFF0F172A)
+    status == CbtQuestionStatus.UNSEEN -> Color(0xFF1E293B) // Sharp dark outline
+    else -> Color.Transparent
+  }
+
+  Box(
+    modifier = modifier
+      .width(46.dp)
+      .height(32.dp)
+      .clip(shape)
+      .background(backgroundColor)
+      .border(borderStroke, borderColor, shape)
+      .clickable(onClick = onClick)
+      .testTag("grid_q_$questionNumber"),
+    contentAlignment = Alignment.Center
+  ) {
+    Text(
+      text = "$questionNumber",
+      color = textColor,
+      fontSize = 12.sp,
+      fontWeight = FontWeight.Bold,
+      textAlign = TextAlign.Center
+    )
+
+    // Green dot badge for Attempted & Marked for Review
+    if (status == CbtQuestionStatus.ATTEMPTED_AND_MARKED) {
+      Box(
+        modifier = Modifier
+          .align(Alignment.BottomEnd)
+          .padding(end = 2.dp, bottom = 2.dp)
+          .size(6.dp)
+          .clip(CircleShape)
+          .background(Color(0xFF22C55E))
+          .border(0.5.dp, Color.White, CircleShape)
       )
     }
   }
