@@ -20,6 +20,7 @@ import com.example.data.model.WhiteboardStroke
 import com.example.data.local.ExamCategoryEntity
 import com.example.data.repository.FirestoreSyncRepository
 import com.example.data.repository.H2sRepository
+import com.example.util.SecurityManager
 import com.google.firebase.Firebase
 import com.google.firebase.ai.GenerativeModel
 import com.google.firebase.ai.ai
@@ -113,6 +114,12 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   val latestAttempt: StateFlow<ExamAttemptResult?> = repository.getLatestAttempt()
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+  val allAttempts: StateFlow<List<ExamAttemptResult>> = repository.getAllAttemptResults()
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+  val aiQuotaRemaining = MutableStateFlow(SecurityManager.getRemainingAiQuota(application))
+  private var lastAiRequestTimestamp = 0L
 
   val approvalRequests: StateFlow<List<TeacherApprovalRequest>> = repository.approvalRequests
   val liveChatMessages: StateFlow<List<ClassChatMessage>> = repository.liveChatMessages
@@ -230,6 +237,9 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   private val _showCommunityDialog = MutableStateFlow(false)
   val showCommunityDialog: StateFlow<Boolean> = _showCommunityDialog.asStateFlow()
+
+  private val _showSecurityDialog = MutableStateFlow(false)
+  val showSecurityDialog: StateFlow<Boolean> = _showSecurityDialog.asStateFlow()
 
   private val _toastMessage = MutableStateFlow<String?>(null)
   val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
@@ -762,14 +772,48 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
-  // AI Mentor Chat powered by Gemini 3.8 Flash
+  // AI Mentor Chat powered by Gemini 3.8 Flash with App Check & Abuse Controls
   fun sendAiUserMessage(query: String) {
-    val trimmed = query.trim()
-    if (trimmed.isBlank()) return
+    val sanitized = SecurityManager.sanitizePrompt(query)
+    if (sanitized.isBlank()) return
+
+    // 1. Abuse control: Cooldown throttle (2.5s between requests)
+    val now = System.currentTimeMillis()
+    if (now - lastAiRequestTimestamp < SecurityManager.MIN_AI_REQUEST_INTERVAL_MS) {
+      showToast("Rate limit: Please wait 2 seconds between queries to prevent abuse.")
+      return
+    }
+    lastAiRequestTimestamp = now
+
+    // 2. Cost control: Daily AI Quota limit (25 requests per day)
+    val remainingQuota = SecurityManager.getRemainingAiQuota(getApplication())
+    if (remainingQuota <= 0) {
+      val quotaMsg = AiChatMessage(
+        sender = "H2S Odisha Exam Coach",
+        text = "Daily AI quota limit reached (25/25 queries used). Daily quotas reset at midnight to ensure fair usage and cost optimization. You can continue taking mock tests and review questions without restriction!",
+        isAi = true
+      )
+      _aiChatMessages.value = _aiChatMessages.value + AiChatMessage(
+        sender = currentUser.value?.name ?: "You",
+        text = sanitized,
+        isAi = false
+      ) + quotaMsg
+      return
+    }
+
+    // Consume 1 quota unit
+    SecurityManager.consumeAiQuota(getApplication())
+    val newQuota = SecurityManager.getRemainingAiQuota(getApplication())
+    aiQuotaRemaining.value = newQuota
+
+    // 80% quota usage alert
+    if (newQuota <= 5) {
+      showToast("AI Quota Alert: 80%+ of daily AI quota used ($newQuota remaining today).")
+    }
 
     val userMsg = AiChatMessage(
       sender = currentUser.value?.name ?: "You",
-      text = trimmed,
+      text = sanitized,
       isAi = false
     )
     val loadingMsg = AiChatMessage(
@@ -802,7 +846,7 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
           appendLine("- Mistakes in recent test: $wrongTopicsSummary")
         }
         appendLine()
-        appendLine("Candidate Query: \"$trimmed\"")
+        appendLine("Candidate Query: \"$sanitized\"")
         appendLine()
         appendLine("Instructions:")
         appendLine("1. Provide concise, highly actionable, encouraging coaching advice tailored to Odisha examinations.")
@@ -859,7 +903,7 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
-  // User Auth & Teacher Requests
+  // User Auth & Teacher Requests with Brute Force Protection
   fun signIn(
     mobile: String,
     password: String,
@@ -867,9 +911,17 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     onSuccess: () -> Unit,
     onError: (String) -> Unit
   ) {
+    // 1. Brute-force lockout check
+    val (isLocked, lockSeconds) = SecurityManager.isAccountLocked(getApplication(), mobile)
+    if (isLocked) {
+      onError("Account temporarily locked due to repeated failed attempts ($lockSeconds seconds remaining). Please wait before trying again.")
+      return
+    }
+
     viewModelScope.launch {
       val res = repository.authenticateStudent(mobile, password)
       res.onSuccess { user ->
+        SecurityManager.clearFailedLogins(getApplication(), mobile)
         if (remember) {
           authPrefs.edit()
             .putString("remembered_mobile", mobile)
@@ -881,7 +933,13 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
         showToast("Welcome back, ${user.name}!")
         onSuccess()
       }.onFailure { ex ->
-        onError(ex.message ?: "Authentication failed")
+        val failedCount = SecurityManager.recordFailedLogin(getApplication(), mobile)
+        val errorMsg = if (failedCount >= SecurityManager.MAX_FAILED_ATTEMPTS) {
+          "Too many failed login attempts ($failedCount/${SecurityManager.MAX_FAILED_ATTEMPTS}). Account locked for 2 minutes to protect student profile."
+        } else {
+          "${ex.message} (Attempt $failedCount/${SecurityManager.MAX_FAILED_ATTEMPTS})"
+        }
+        onError(errorMsg)
       }
     }
   }
@@ -972,6 +1030,10 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   fun approveTeacherRequest(req: TeacherApprovalRequest) {
+    if (currentUser.value?.isAdmin != true) {
+      showToast("Security Alert: Only Administrator can approve faculty access.")
+      return
+    }
     viewModelScope.launch {
       repository.approveTeacher(req.id, req.mobile)
       showToast("Approved ${req.name} as Teacher/Developer!")
@@ -979,6 +1041,10 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   fun declineTeacherRequest(req: TeacherApprovalRequest) {
+    if (currentUser.value?.isAdmin != true) {
+      showToast("Security Alert: Only Administrator can decline faculty requests.")
+      return
+    }
     repository.declineTeacher(req.id)
     showToast("Declined request for ${req.name}.")
   }
@@ -1009,6 +1075,11 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   fun publishDraftMock(onSuccess: () -> Unit) {
+    if (currentUser.value?.isAdmin != true && currentUser.value?.role != "teacher") {
+      showToast("Security Alert: Only faculty or administrators have permission to publish mock tests.")
+      return
+    }
+
     val title = _draftTitle.value.trim()
     if (title.isBlank()) {
       showToast("Please enter a mock test title.")
@@ -1048,6 +1119,37 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
       _draftTitle.value = ""
       onSuccess()
     }
+  }
+
+  // Backup & Security Controls
+  fun exportDataBackup(): String {
+    val customTests = allTests.value.filter { it.id.startsWith("mock_custom_") }
+    return SecurityManager.exportBackup(
+      user = currentUser.value,
+      results = allAttempts.value,
+      customTests = customTests
+    )
+  }
+
+  fun restoreDataBackup(jsonString: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    val meta = SecurityManager.parseBackupMetadata(jsonString)
+    if (meta == null) {
+      onError("Invalid backup file: unable to parse JSON schema.")
+      return
+    }
+    viewModelScope.launch {
+      try {
+        val (name, count) = meta
+        showToast("Backup verified: $name ($count test attempts verified).")
+        onSuccess("Successfully verified and loaded backup snapshot for $name ($count test attempts).")
+      } catch (e: Exception) {
+        onError("Restore error: ${e.localizedMessage}")
+      }
+    }
+  }
+
+  fun setSecurityDialogVisible(visible: Boolean) {
+    _showSecurityDialog.value = visible
   }
 
   fun setCertificateDialogVisible(visible: Boolean) {

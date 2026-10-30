@@ -109,6 +109,8 @@ fun MainAppShell(
   val showCertificateDialog by viewModel.showCertificateDialog.collectAsStateWithLifecycle()
   val showNotificationsDialog by viewModel.showNotificationsDialog.collectAsStateWithLifecycle()
   val showCommunityDialog by viewModel.showCommunityDialog.collectAsStateWithLifecycle()
+  val showSecurityDialog by viewModel.showSecurityDialog.collectAsStateWithLifecycle()
+  val aiQuotaRemaining by viewModel.aiQuotaRemaining.collectAsStateWithLifecycle()
   val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
 
   // CBT Exam State
@@ -205,6 +207,14 @@ fun MainAppShell(
           }
         },
         actions = {
+          // Security & Backups Center
+          IconButton(
+            onClick = { viewModel.setSecurityDialogVisible(true) },
+            modifier = Modifier.testTag("top_security_center_btn")
+          ) {
+            Text("🛡️", fontSize = 18.sp)
+          }
+
           // Notification Bell with Badge
           IconButton(
             onClick = { viewModel.setNotificationsDialogVisible(true) },
@@ -571,6 +581,22 @@ fun MainAppShell(
     CommunityBatchDialog(
       onDismiss = { viewModel.setCommunityDialogVisible(false) },
       onShowToast = { msg -> viewModel.showToast(msg) }
+    )
+  }
+
+  if (showSecurityDialog) {
+    com.example.ui.components.SecurityBackupDialog(
+      currentUser = currentUser,
+      remainingQuota = aiQuotaRemaining,
+      onDismiss = { viewModel.setSecurityDialogVisible(false) },
+      onExportBackup = { viewModel.exportDataBackup() },
+      onRestoreBackup = { json ->
+        viewModel.restoreDataBackup(
+          jsonString = json,
+          onSuccess = { msg -> viewModel.showToast(msg) },
+          onError = { err -> viewModel.showToast("Error: $err") }
+        )
+      }
     )
   }
 }

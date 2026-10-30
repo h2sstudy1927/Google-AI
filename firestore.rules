@@ -11,6 +11,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email in ['pinturanmal2@gmail.com', 'admin@h2sstudy.com']) ||
+        (request.auth.token.admin == true)
+      );
+    }
+
     function isValidUser(data, userId) {
       return data.userId == userId &&
              data.email is string &&
@@ -34,27 +41,45 @@ service cloud.firestore {
              (!('completedAt' in data) || data.completedAt is timestamp);
     }
 
-    // User profile matching auth uid
+    // 1. Student private profile and scores isolation (only owner or admin)
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
       allow create, update: if isOwner(userId) && isValidUser(request.resource.data, userId);
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) || isAdmin();
 
-      // Subcollection for mock results
+      // Subcollection for mock results (strictly private student data)
       match /mock_results/{resultId} {
-        allow read: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidMockResult(request.resource.data, userId);
-        allow delete: if isOwner(userId);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      // Subcollection for private backups
+      match /backups/{backupId} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // Public catalog read for logged-in users
-    match /exam_categories/{categoryId} {
-      allow read: if isAuthenticated();
-      allow write: if false;
+    // 2. Admin panel & teacher approval requests (admin permissions only for review)
+    match /teacher_requests/{requestId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // Default deny all other paths
+    // 3. Custom Mock Tests (read by authenticated students, authoring restricted to admin/teachers)
+    match /custom_mock_tests/{testId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 4. Public catalog read for logged-in users
+    match /exam_categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // 5. Default deny all other paths
     match /{document=**} {
       allow read, write: if false;
     }

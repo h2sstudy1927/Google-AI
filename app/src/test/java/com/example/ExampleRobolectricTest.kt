@@ -314,4 +314,65 @@ class ExampleRobolectricTest {
     assertEquals(85.5, updated?.avgScore ?: 0.0, 0.001)
     assertEquals("EXAM_READY", updated?.studentTier)
   }
+
+  @Test
+  fun `verify SecurityManager password hashing, brute-force lockout, and prompt sanitization`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+
+    // 1. Password hashing
+    val rawPass = "odisha_aspirant_2026"
+    val hash = com.example.util.SecurityManager.hashPassword(rawPass)
+    assertTrue(hash.length >= 64)
+    assertTrue(com.example.util.SecurityManager.verifyPassword(rawPass, hash))
+    assertTrue(com.example.util.SecurityManager.verifyPassword(rawPass, rawPass)) // backwards compat
+
+    // 2. Brute force lockout
+    val testMobile = "9861999888"
+    com.example.util.SecurityManager.clearFailedLogins(context, testMobile)
+    val (lockedInit, _) = com.example.util.SecurityManager.isAccountLocked(context, testMobile)
+    assertEquals(false, lockedInit)
+
+    repeat(com.example.util.SecurityManager.MAX_FAILED_ATTEMPTS) {
+      com.example.util.SecurityManager.recordFailedLogin(context, testMobile)
+    }
+    val (lockedAfterFailures, remaining) = com.example.util.SecurityManager.isAccountLocked(context, testMobile)
+    assertTrue(lockedAfterFailures)
+    assertTrue(remaining > 0)
+
+    com.example.util.SecurityManager.clearFailedLogins(context, testMobile)
+    val (lockedAfterClear, _) = com.example.util.SecurityManager.isAccountLocked(context, testMobile)
+    assertEquals(false, lockedAfterClear)
+
+    // 3. AI Prompt Sanitization
+    val dirtyPrompt = "<script>alert('hack')</script> How to prepare for OPSC General Studies?"
+    val cleanPrompt = com.example.util.SecurityManager.sanitizePrompt(dirtyPrompt)
+    assertTrue(!cleanPrompt.contains("<") && !cleanPrompt.contains(">"))
+    assertTrue(cleanPrompt.contains("How to prepare for OPSC General Studies?"))
+
+    // 4. AI Quota Controls
+    val quotaBefore = com.example.util.SecurityManager.getRemainingAiQuota(context)
+    assertTrue(quotaBefore in 0..25)
+
+    // 5. Backup Export and Metadata Verification
+    val dummyUser = com.example.data.model.UserSession(
+      name = "Subhashree Pradhan",
+      mobile = "9861334455",
+      district = "Puri",
+      role = "student",
+      isApproved = true,
+      isAdmin = false,
+      studentTier = "MASTER"
+    )
+    val jsonBackup = com.example.util.SecurityManager.exportBackup(
+      user = dummyUser,
+      results = emptyList(),
+      customTests = emptyList()
+    )
+    assertTrue(jsonBackup.contains("H2S STUDY"))
+    assertTrue(jsonBackup.contains("Subhashree Pradhan"))
+    val meta = com.example.util.SecurityManager.parseBackupMetadata(jsonBackup)
+    assertNotNull(meta)
+    assertEquals("Subhashree Pradhan", meta?.first)
+    assertEquals(0, meta?.second)
+  }
 }

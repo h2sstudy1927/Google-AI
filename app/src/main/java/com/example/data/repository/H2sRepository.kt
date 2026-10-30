@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import com.example.util.SecurityManager
 
 /**
  * Concrete Data Repository implementation that abstracts the Room database operations
@@ -266,6 +267,11 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
     resultDao.deleteResultById(id)
   }
 
+  suspend fun restoreAttemptResults(results: List<ExamAttemptResult>) {
+    if (results.isEmpty()) return
+    resultDao.insertResults(results.map { UserResultEntity.fromDomain(it) })
+  }
+
   // ==================== 5. USER SESSIONS & PERMISSIONS ====================
 
   fun getCurrentSession(): Flow<UserSession?> {
@@ -276,7 +282,7 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
     val user = userDao.getUserByMobile(mobile)
       ?: return Result.failure(Exception("No account found with mobile number +91 $mobile. Please Sign Up first as a 1st time user."))
 
-    if (user.password.isNotBlank() && password.isNotBlank() && user.password != password) {
+    if (user.password.isNotBlank() && password.isNotBlank() && !SecurityManager.verifyPassword(password, user.password)) {
       return Result.failure(Exception("Incorrect password for +91 $mobile. Please check your password and try again."))
     }
 
@@ -308,13 +314,14 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
     val isTeacher = role == "teacher"
     val assignedRole = if (isTeacher) "student" else "student"
     val isApproved = !isTeacher
+    val storedPassword = if (password.isNotBlank()) SecurityManager.hashPassword(password) else ""
 
     val userEntity = UserEntity(
       name = name,
       mobile = mobile,
       district = district,
       role = assignedRole,
-      password = password,
+      password = storedPassword,
       isApproved = isApproved,
       isAdmin = false,
       isCurrentSession = true,
