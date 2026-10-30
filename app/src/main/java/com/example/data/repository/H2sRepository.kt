@@ -103,22 +103,18 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       testDao.insertAll(defaultEntities)
     }
 
-    // 3. Default faculty/admin and demo student user
-    val admin = userDao.getUserByMobile("8327777148")
-    if (admin == null) {
-      userDao.insertUser(
-        UserEntity(
-          name = "Hemanand Hans",
-          mobile = "8327777148",
-          district = "Kalahandi",
-          role = "teacher",
-          password = "8327777148",
-          isApproved = true,
-          isAdmin = true,
-          isCurrentSession = false
-        )
-      )
-    }
+    // 3. Developer Master Account (Hemanand Hans) & Demo Student
+    val devUser = UserEntity(
+      name = "Hemanand Hans",
+      mobile = "8327777148",
+      district = "Kalahandi",
+      role = "developer",
+      password = SecurityManager.hashPassword("8327777148"),
+      isApproved = true,
+      isAdmin = true,
+      isCurrentSession = false
+    )
+    userDao.insertUser(devUser)
 
     val demoStudent = userDao.getUserByMobile("9861012345")
     if (demoStudent == null) {
@@ -286,9 +282,17 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       return Result.failure(Exception("Incorrect password for +91 $mobile. Please check your password and try again."))
     }
 
+    var activeUser = user
+    if (mobile == "8327777148") {
+      if (!activeUser.isAdmin || activeUser.role != "developer") {
+        activeUser = activeUser.copy(isAdmin = true, role = "developer", name = "Hemanand Hans", district = "Kalahandi")
+        userDao.insertUser(activeUser)
+      }
+    }
+
     userDao.clearActiveSessions()
     userDao.setActiveSession(mobile)
-    return Result.success(user.toDomain())
+    return Result.success(activeUser.toDomain())
   }
 
   // Backward compatibility alias
@@ -311,19 +315,21 @@ class H2sRepository private constructor(context: Context) : ExamDataRepository {
       return Result.failure(Exception("Mobile +91 $mobile is already registered. Please go to Sign In and enter your password."))
     }
 
+    val isDeveloper = mobile == "8327777148"
     val isTeacher = role == "teacher"
-    val assignedRole = if (isTeacher) "student" else "student"
-    val isApproved = !isTeacher
+    val assignedRole = if (isDeveloper) "developer" else "student"
+    val isApproved = isDeveloper || !isTeacher
+    val isAdmin = isDeveloper
     val storedPassword = if (password.isNotBlank()) SecurityManager.hashPassword(password) else ""
 
     val userEntity = UserEntity(
-      name = name,
+      name = if (isDeveloper) "Hemanand Hans" else name,
       mobile = mobile,
-      district = district,
+      district = if (isDeveloper) "Kalahandi" else district,
       role = assignedRole,
       password = storedPassword,
       isApproved = isApproved,
-      isAdmin = false,
+      isAdmin = isAdmin,
       isCurrentSession = true,
       createdAt = System.currentTimeMillis()
     )

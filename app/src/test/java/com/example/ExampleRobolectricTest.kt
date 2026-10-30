@@ -375,4 +375,29 @@ class ExampleRobolectricTest {
     assertEquals("Subhashree Pradhan", meta?.first)
     assertEquals(0, meta?.second)
   }
+
+  @Test
+  fun `verify Developer Hemanand Hans credentials and exclusive master privileges`() = runBlocking {
+    val userDao = db.userDao()
+
+    val devUser = com.example.data.local.UserEntity(
+      name = "Hemanand Hans",
+      mobile = "8327777148",
+      district = "Kalahandi",
+      role = "developer",
+      password = com.example.util.SecurityManager.hashPassword("8327777148"),
+      isApproved = true,
+      isAdmin = true,
+      isCurrentSession = false
+    )
+    userDao.insertUser(devUser)
+
+    val fetched = userDao.getUserByMobile("8327777148")
+    assertNotNull(fetched)
+    assertEquals("Hemanand Hans", fetched?.name)
+    assertEquals("Kalahandi", fetched?.district)
+    assertEquals("developer", fetched?.role)
+    assertTrue(fetched?.isAdmin == true)
+    assertTrue(com.example.util.SecurityManager.verifyPassword("8327777148", fetched?.password ?: ""))
+  }
 }

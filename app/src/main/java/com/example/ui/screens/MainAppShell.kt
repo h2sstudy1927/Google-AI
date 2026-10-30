@@ -233,25 +233,31 @@ fun MainAppShell(
             }
           }
 
-          // User Name Pill with Active Dot
+          // User Name Pill with Active Dot / Developer Master Badge
+          val isDev = currentUser?.mobile == "8327777148" || currentUser?.isAdmin == true
           Box(
             modifier = Modifier
               .clip(RoundedCornerShape(10.dp))
-              .background(Purple950.copy(alpha = 0.7f))
-              .border(1.dp, Purple700, RoundedCornerShape(10.dp))
+              .background(if (isDev) Color(0xFF451A03) else Purple950.copy(alpha = 0.7f))
+              .border(1.dp, if (isDev) Amber400 else Purple700, RoundedCornerShape(10.dp))
               .padding(horizontal = 8.dp, vertical = 4.dp)
           ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-              Box(
-                modifier = Modifier
-                  .size(6.dp)
-                  .clip(CircleShape)
-                  .background(Emerald400)
-              )
-              Spacer(modifier = Modifier.width(5.dp))
+              if (isDev) {
+                Text("👑", fontSize = 11.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+              } else {
+                Box(
+                  modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(Emerald400)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+              }
               Text(
-                text = currentUser?.name ?: "Candidate",
-                color = Color.White,
+                text = if (isDev) "Hemanand Hans (Dev)" else (currentUser?.name ?: "Candidate"),
+                color = if (isDev) Amber400 else Color.White,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1

@@ -93,9 +93,9 @@ fun AuthGateScreen(
   var isGoogleLoading by remember { mutableStateOf(false) }
   var isLoginTab by remember { mutableStateOf(true) }
 
-  // Sign In Form State with auto-remembered credentials
-  var loginMobile by remember { mutableStateOf(initialMobile.ifBlank { "9861012345" }) }
-  var loginPassword by remember { mutableStateOf(initialPassword.ifBlank { "odisha2026" }) }
+  // Sign In Form State with auto-remembered credentials (Default to Developer Hemanand Hans)
+  var loginMobile by remember { mutableStateOf(initialMobile.ifBlank { "8327777148" }) }
+  var loginPassword by remember { mutableStateOf(initialPassword.ifBlank { "8327777148" }) }
   var rememberCredentials by remember { mutableStateOf(true) }
   var isLoginPasswordVisible by remember { mutableStateOf(false) }
 
@@ -456,15 +456,17 @@ fun AuthGateScreen(
                   .weight(1f)
                   .clip(RoundedCornerShape(10.dp))
                   .background(Color(0xFFFEF3C7))
+                  .border(1.dp, Color(0xFFF59E0B), RoundedCornerShape(10.dp))
                   .clickable {
                     loginMobile = "8327777148"
                     loginPassword = "8327777148"
                   }
-                  .padding(vertical = 8.dp, horizontal = 8.dp),
+                  .padding(vertical = 8.dp, horizontal = 8.dp)
+                  .testTag("fill_developer_credentials"),
                 contentAlignment = Alignment.Center
               ) {
                 Text(
-                  text = "👨‍🏫 Faculty (Hemanand)",
+                  text = "👑 Developer (Hemanand Hans)",
                   fontSize = 11.sp,
                   fontWeight = FontWeight.Bold,
                   color = Color(0xFF92400E)

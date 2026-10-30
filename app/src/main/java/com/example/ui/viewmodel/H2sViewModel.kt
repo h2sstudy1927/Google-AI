@@ -88,8 +88,8 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   }
 
   private val authPrefs = application.getSharedPreferences("h2s_auth_prefs", android.content.Context.MODE_PRIVATE)
-  val rememberedMobile = MutableStateFlow(authPrefs.getString("remembered_mobile", "") ?: "")
-  val rememberedPassword = MutableStateFlow(authPrefs.getString("remembered_password", "") ?: "")
+  val rememberedMobile = MutableStateFlow(authPrefs.getString("remembered_mobile", "8327777148") ?: "8327777148")
+  val rememberedPassword = MutableStateFlow(authPrefs.getString("remembered_password", "8327777148") ?: "8327777148")
 
   private val _currentScreen = MutableStateFlow<Screen>(Screen.Home)
   val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
