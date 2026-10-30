@@ -276,9 +276,125 @@ object PreloadedData {
           id = 5,
           topic = "Inclusive Education",
           question = "The Right to Education (RTE) Act 2009 guarantees free and compulsory education to all children of which age group?",
-          options = listOf("6 to 14 years", "3 to 6 years", "14 to 18 years", "5 to 10 years"),
+          options = listOf("6 to 14 years", "3 to 6 years", "14 to 18 years", "5 to 10 years", "4 to 12 years"),
           correctIndex = 0,
           explanation = "Under the RTE Act 2009 (Article 21A), free and compulsory education is guaranteed for children aged 6 to 14 years."
+        )
+      )
+    ),
+
+    // 6. SBI Clerk Prelims Full Test 7 (CBT Mock Test matching exact reference screenshot)
+    ExamTest(
+      id = "mock_sbi_clerk_07",
+      title = "SBI Clerk Prelims Full Test 7",
+      category = "OSSC",
+      subject = "English, Numerical & Reasoning Ability",
+      durationMinutes = 60,
+      totalMarks = 100,
+      description = "Full 3-section simulation test matching TCS iON CBT pattern with English Language, Numerical Ability, and Reasoning Ability.",
+      questions = listOf(
+        // Section 1: English Language
+        Question(
+          id = 1,
+          topic = "English Language",
+          question = "Select the most appropriate synonym for the word 'METICULOUS':",
+          options = listOf(
+            "Extremely careful and precise in details",
+            "Careless and disorganized in execution",
+            "Slow and sluggish in routine tasks",
+            "Aggressive and confrontation oriented",
+            "Uncertain and hesitant about conclusions"
+          ),
+          correctIndex = 0,
+          explanation = "'Meticulous' means showing great attention to detail; very careful and precise."
+        ),
+        Question(
+          id = 2,
+          topic = "English Language",
+          question = "In the sentence below, identify the part containing an error: 'Neither the candidate (A) / nor the invigilators (B) / was present (C) / in the exam hall (D) / No error (E)':",
+          options = listOf("A", "B", "C", "D", "E"),
+          correctIndex = 2,
+          explanation = "When subjects are joined by 'neither... nor', the verb agrees with the closer subject ('the invigilators' - plural), so it should be 'were present'."
+        ),
+        Question(
+          id = 3,
+          topic = "English Language",
+          question = "Choose the correct idiom meaning 'to face a difficult situation with courage':",
+          options = listOf(
+            "Bite the bullet",
+            "Beat around the bush",
+            "Burn the midnight oil",
+            "Spill the beans",
+            "Bark up the wrong tree"
+          ),
+          correctIndex = 0,
+          explanation = "'Bite the bullet' means to face a grim or difficult situation with courage and fortitude."
+        ),
+
+        // Section 2: Numerical Ability
+        Question(
+          id = 4,
+          topic = "Numerical Ability",
+          question = "If a sum of money doubles itself in 5 years at simple interest, in how many years will it become four times of itself at the same rate of interest?",
+          options = listOf("10 years", "12 years", "15 years", "20 years", "25 years"),
+          correctIndex = 2,
+          explanation = "For doubling, SI = P in 5 yrs -> R = 20%. For becoming 4 times, SI = 3P -> Time = (3P * 100) / (P * 20) = 15 years."
+        ),
+        Question(
+          id = 5,
+          topic = "Numerical Ability",
+          question = "A train 240 m long crosses a platform 360 m long in 30 seconds. What is the speed of the train in km/hr?",
+          options = listOf("60 km/hr", "72 km/hr", "80 km/hr", "84 km/hr", "90 km/hr"),
+          correctIndex = 1,
+          explanation = "Total distance = 240 + 360 = 600 m. Speed = 600 / 30 = 20 m/s. In km/hr = 20 * (18/5) = 72 km/hr."
+        ),
+        Question(
+          id = 6,
+          topic = "Numerical Ability",
+          question = "What should come in place of the question mark (?) in: 12, 26, 54, 110, 222, (?)",
+          options = listOf("444", "446", "448", "452", "456"),
+          correctIndex = 1,
+          explanation = "Pattern is * 2 + 2: 12*2+2=26, 26*2+2=54, 54*2+2=110, 110*2+2=222, 222*2+2 = 446."
+        ),
+
+        // Section 3: Reasoning Ability
+        Question(
+          id = 7,
+          topic = "Reasoning Ability",
+          question = "In a certain code language, 'ODISHA' is coded as 'PEJTIB'. How will 'CUTTACK' be coded in that same language?",
+          options = listOf("DVUUBDL", "DVVUBDL", "DUVUADL", "EWVVBDL", "DVUUCEL"),
+          correctIndex = 0,
+          explanation = "Each letter is shifted by +1: C->D, U->V, T->U, T->U, A->B, C->D, K->L = DVUUBDL."
+        ),
+        Question(
+          id = 8,
+          topic = "Reasoning Ability",
+          question = "Pointing to a photograph, a woman says: 'He is the only son of the wife of my father.' How is the man related to the woman?",
+          options = listOf("Father", "Brother", "Uncle", "Son", "Cousin"),
+          correctIndex = 1,
+          explanation = "Wife of my father = mother. Only son of mother = woman's brother (or herself if male, but here woman says he is the only son, so brother)."
+        ),
+        Question(
+          id = 9,
+          topic = "Reasoning Ability",
+          question = "Statements: Some pens are books. All books are pencils. Conclusions: I. Some pencils are pens. II. All pens are pencils.",
+          options = listOf(
+            "Only conclusion I follows",
+            "Only conclusion II follows",
+            "Either I or II follows",
+            "Neither I nor II follows",
+            "Both I and II follow"
+          ),
+          correctIndex = 0,
+          explanation = "Since Some pens are books and All books are pencils, the intersection of pens and pencils is non-empty. Only I follows."
+        ),
+        Question(
+          id = 10,
+          topic = "Reasoning Ability",
+          question = "Five students P, Q, R, S, and T are sitting in a row facing North. R is sitting in the middle. P is to the immediate left of R. S is at the extreme right end. Who is to the immediate right of R?",
+          options = listOf("P", "Q or T", "T", "Q", "Data inadequate"),
+          correctIndex = 1,
+          explanation = "Row order: _ P R _ S. R is in center (position 3). P is at 2. S is at 5. Position 4 can be occupied by either Q or T."
         )
       )
     )

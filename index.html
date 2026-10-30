@@ -568,75 +568,212 @@
       <!-- ========================================================================= -->
       <!-- 📝 ACTIVE EXAM HALL VIEW (RUNS WHEN STUDENT CLICKS ATTEMPT MOCK)         -->
       <!-- ========================================================================= -->
-      <div id="activeExamView" class="hidden space-y-5">
-        
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <button id="exitExamBtn" type="button" class="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 transition">
-              <span>←</span>
-              <span>Back</span>
+      <!-- 🖥️ CBT INSTRUCTIONS PRE-SCREEN (Screenshot 1)                             -->
+      <!-- ========================================================================= -->
+      <div id="cbtInstructionsModal" class="hidden fixed inset-0 z-50 bg-[#14171C] text-slate-200 flex flex-col p-4 md:p-8 overflow-y-auto">
+        <div class="max-w-3xl w-full mx-auto flex-1 flex flex-col justify-between">
+          <div>
+            <button id="cbtInstructionsBackBtn" type="button" class="flex items-center gap-1.5 text-slate-300 hover:text-white mb-6 text-sm font-semibold transition">
+              <span class="text-xl">‹</span>
+              <span>Your Tests</span>
             </button>
-            <h3 id="examHallTestTitle" class="text-sm md:text-base font-bold text-slate-900">
-              Exam Title
+
+            <h2 id="cbtInstTestTitle" class="text-lg md:text-xl font-bold text-white text-center mb-4">
+              SBI Clerk Prelims Full Test 7
+            </h2>
+
+            <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-6 pb-2 border-b border-slate-800">
+              <span id="cbtInstDuration">Duration: 60 Mins.</span>
+              <span id="cbtInstMarks">Maximum Marks: 100.0</span>
+            </div>
+
+            <div class="space-y-3.5 text-xs md:text-sm text-slate-300 leading-relaxed mb-6">
+              <p id="cbtInstSectionsCount">• The test contain 3 sections having 100 questions.</p>
+              <p>• Each question has 5 options out of which only one is correct.</p>
+              <p id="cbtInstFinishTime">• You have to finish the test in 60 minutes.</p>
+              <p>• You will be awarded 1 mark for each correct answer and 0.25 will be deducted for each wrong answer.</p>
+              <p>• There is no negative marking for the questions that you have not attempted.</p>
+              <p>• You can write this test only once. Make sure that you complete the test before you submit the test and/or close the browser.</p>
+              <p class="text-slate-400 text-xs leading-normal">
+                • I have read all the instructions carefully and have understood them. I agree not to cheat or use unfair means in this examination. I understand that using unfair means of any sort for my own or someone else's advantage will lead to my immediate disqualification. The decision of H2S Study will be final in these matters and cannot be appealed.
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-4 border-t border-slate-800">
+            <div class="p-3 bg-[#1E2228] border border-slate-700 rounded-lg flex items-center justify-between text-xs text-slate-200">
+              <span>Choose your Default Language: <strong id="cbtChosenLangText" class="text-blue-400 font-bold ml-1">English</strong></span>
+              <select id="cbtLangSelect" class="bg-transparent text-slate-300 text-xs font-semibold focus:outline-none cursor-pointer">
+                <option value="English" class="bg-slate-900 text-white">English</option>
+                <option value="Odia" class="bg-slate-900 text-white">Odia</option>
+                <option value="Hindi" class="bg-slate-900 text-white">Hindi</option>
+              </select>
+            </div>
+
+            <button id="cbtAgreeAndContinueBtn" type="button" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm shadow-md transition">
+              Agree and Continue
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- 🖥️ CBT ACTIVE EXAM HALL & PALETTE DRAWER (Screenshot 2 & 3)                -->
+      <!-- ========================================================================= -->
+      <div id="activeExamView" class="hidden bg-[#14171C] text-slate-100 rounded-2xl border border-slate-800 shadow-xl overflow-hidden relative min-h-[580px] flex flex-col justify-between">
+        
+        <!-- TOP HEADER APP BAR (Screenshot 2) -->
+        <div class="bg-[#181B20] border-b border-slate-800 px-3 py-2.5 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <button id="cbtPauseBtn" type="button" title="Pause Test" class="w-8 h-8 rounded-md bg-[#22272F] hover:bg-slate-700 flex items-center justify-center text-xs text-white font-bold transition">
+              ⏸
+            </button>
+            <span id="examTimerDisplay" class="font-mono font-bold text-sm md:text-base text-white tracking-wider">
+              00:59:17
+            </span>
+            <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
+            <h3 id="examHallTestTitle" class="text-xs md:text-sm font-bold text-slate-200 truncate max-w-[160px] md:max-w-xs">
+              SBI Clerk Prelims Full Test 7
             </h3>
           </div>
 
-          <div class="flex items-center gap-4">
-            <div class="text-right">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Time Left</span>
-              <span id="examTimerDisplay" class="text-lg md:text-xl font-bold font-mono text-purple-600">15:00</span>
-            </div>
-            <div class="h-8 w-px bg-slate-200"></div>
-            <div class="text-right">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Live Score</span>
-              <span id="examLiveScoreDisplay" class="text-lg md:text-xl font-bold text-emerald-600">0.00 pts</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="examQuestionCard" class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
-          <div class="mb-5">
-            <div class="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
-              <span id="examProgressLabel">Question 1 of 4</span>
-              <span id="examPercentLabel">25% Completed</span>
-            </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div id="examProgressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
-            </div>
+          <!-- Section Tabs -->
+          <div id="cbtSectionTabsContainer" class="flex items-center gap-1 overflow-x-auto max-w-[280px] md:max-w-md py-1">
+            <!-- Populated dynamically -->
           </div>
 
-          <div class="mb-5">
-            <div class="flex items-center gap-2 mb-2">
-              <span id="examTopicBadge" class="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-purple-100 text-purple-800">
-                Odisha General Knowledge
-              </span>
-              <span class="text-[11px] font-semibold text-slate-400">Marking: +1.00 / -0.25</span>
-            </div>
-            <h4 id="examQuestionStatement" class="text-base md:text-lg font-semibold text-slate-900 leading-relaxed">
-              Loading Question...
-            </h4>
-          </div>
-
-          <div id="examOptionsContainer" class="space-y-3 mb-6">
-            <!-- Dynamically populated -->
-          </div>
-
-          <div id="examExplanationBox" class="hidden mb-6 p-4 rounded-xl text-xs md:text-sm border font-medium"></div>
-
-          <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-            <button id="examSkipBtn" type="button" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition">
-              Skip (0 penalty)
+          <div class="flex items-center gap-1.5">
+            <button id="cbtRoughSheetBtn" type="button" title="Rough Sheet Whiteboard" class="w-8 h-8 rounded-md bg-[#22272F] hover:bg-slate-700 flex items-center justify-center text-xs text-white transition">
+              ✏️
             </button>
-            <div class="flex gap-2">
-              <button id="examSubmitAnswerBtn" type="button" class="px-6 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs md:text-sm font-semibold shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-                Submit Answer
-              </button>
-              <button id="examNextBtn" type="button" class="hidden px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold shadow-sm transition">
-                Next Question →
-              </button>
-            </div>
+            <button id="cbtDrawerToggleBtn" type="button" title="Question Palette" class="w-8 h-8 rounded-md bg-[#22272F] hover:bg-slate-700 flex items-center justify-center text-sm text-white font-black transition">
+              ☰
+            </button>
           </div>
         </div>
+
+        <!-- SUB-BAR: Question number, timer, marking, right icons (Screenshot 2) -->
+        <div class="bg-[#14171C] border-b border-slate-800/80 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span id="cbtQuestionBadge" class="px-2.5 py-1 rounded bg-[#1F242D] border border-slate-700 text-xs font-bold text-white">
+              Question 1
+            </span>
+            <span class="px-2 py-1 rounded bg-[#1F242D] text-[11px] font-mono text-slate-400 flex items-center gap-1">
+              <span>⏱</span>
+              <span id="cbtQTimerDisplay">00:14</span>
+            </span>
+            <span class="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/60 text-emerald-400 text-xs font-bold">
+              +1.0
+            </span>
+            <span class="px-2 py-0.5 rounded bg-rose-950/60 border border-rose-500/60 text-rose-400 text-xs font-bold">
+              -0.25
+            </span>
+          </div>
+
+          <div class="flex items-center gap-1 text-slate-400">
+            <button id="cbtReportBtn" type="button" title="Report Question" class="p-1.5 hover:text-white rounded hover:bg-slate-800 text-xs">
+              ⚠
+            </button>
+            <button id="cbtBookmarkBtn" type="button" title="Bookmark Question" class="p-1.5 hover:text-amber-400 rounded hover:bg-slate-800 text-xs">
+              🔖
+            </button>
+            <button id="cbtReviewStarBtn" type="button" title="Mark for Review" class="p-1.5 hover:text-amber-400 rounded hover:bg-slate-800 text-sm">
+              ⭐
+            </button>
+          </div>
+        </div>
+
+        <!-- QUESTION STATEMENT & 5 OPTIONS (Screenshot 2) -->
+        <div class="p-4 md:p-6 flex-1 overflow-y-auto space-y-4">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400" id="cbtActiveSectionLabel">
+            Section: English Language
+          </div>
+
+          <h4 id="examQuestionStatement" class="text-sm md:text-base font-semibold text-white leading-relaxed">
+            Question Statement Loading...
+          </h4>
+
+          <div id="examOptionsContainer" class="space-y-2.5 pt-2">
+            <!-- 5 rounded option cards -->
+          </div>
+        </div>
+
+        <!-- BOTTOM ACTION BAR: Mark & Next | Clear | Save & Next (Screenshot 2) -->
+        <div class="bg-[#181B20] border-t border-slate-800 px-4 py-3 flex items-center justify-between gap-3">
+          <button id="cbtMarkAndNextBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+            <span>⭐</span>
+            <span>Mark & Next</span>
+          </button>
+          <button id="cbtClearOptionBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-400 hover:text-slate-200 text-xs font-medium transition">
+            Clear
+          </button>
+          <button id="cbtSaveAndNextBtn" type="button" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+            Save & Next
+          </button>
+        </div>
+
+        <!-- QUESTION PALETTE DRAWER (Screenshot 3) -->
+        <div id="cbtPaletteDrawer" class="hidden absolute top-0 right-0 bottom-0 w-80 max-w-full bg-[#181B20] border-l border-slate-800 shadow-2xl z-30 flex flex-col justify-between">
+          <div>
+            <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+              <span class="font-bold text-xs text-white">Question Palette</span>
+              <button id="cbtCloseDrawerBtn" type="button" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+            </div>
+
+            <!-- Grid View | List View Tabs -->
+            <div class="flex bg-[#14171C] text-xs font-bold border-b border-slate-800">
+              <button id="cbtDrawerTabGrid" type="button" class="flex-1 py-2 text-blue-400 border-b-2 border-blue-500">
+                Grid View
+              </button>
+              <button id="cbtDrawerTabList" type="button" class="flex-1 py-2 text-slate-400 hover:text-slate-200">
+                List View
+              </button>
+            </div>
+
+            <div class="px-3 py-2 border-b border-slate-800">
+              <button id="cbtDrawerInstBtn" type="button" class="text-xs text-blue-400 hover:underline flex items-center gap-1 font-medium">
+                <span>ℹ</span>
+                <span>View Instructions</span>
+              </button>
+            </div>
+
+            <!-- Status Legend (Screenshot 3) -->
+            <div class="p-3 bg-[#14171C] border-b border-slate-800 grid grid-cols-2 gap-2 text-[10px] text-slate-300">
+              <div class="flex items-center gap-1.5">
+                <span>⭐</span>
+                <span>Marked for Review</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span>⚪</span>
+                <span>Unattempted</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span>⭕</span>
+                <span>Unseen</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span>🔵</span>
+                <span>Attempted</span>
+              </div>
+            </div>
+
+            <!-- Section Accordion & Question Grid/List -->
+            <div id="cbtDrawerSectionsContainer" class="p-3 space-y-3 overflow-y-auto max-h-[300px]">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Bottom Sticky Buttons (Screenshot 3) -->
+          <div class="p-3 bg-[#14171C] border-t border-slate-800 flex items-center gap-2">
+            <button id="cbtSubmitSectionBtn" type="button" class="flex-1 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-[11px] font-bold transition">
+              SUBMIT SECTION
+            </button>
+            <button id="cbtSubmitTestBtn" type="button" class="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow transition">
+              SUBMIT TEST
+            </button>
+          </div>
+        </div>
+      </div>
 
         <!-- Scorecard Card -->
         <div id="examScorecardCard" class="hidden bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 text-center">
@@ -1881,209 +2018,417 @@
         `;
 
         card.querySelector('.start-test-btn').addEventListener('click', () => {
-          startExam(test);
+          openCbtInstructions(test);
         });
 
         folderMocksGrid.appendChild(card);
       });
     }
 
-    // --- ACTIVE EXAM HALL EXECUTION (+1.00 / -0.25) ---
+    // --- CBT ONLINE EXAM STATE & ORCHESTRATION ---
     let activeTest = null;
     let currentQIdx = 0;
-    let userSelections = [];
+    let cbtProgress = {}; // index -> { selectedOption, isMarkedForReview, isBookmarked, isVisited, timeSpent }
     let examScore = 0.0;
     let examCorrectCount = 0;
     let examWrongCount = 0;
     let examTimerInterval = null;
-    let examSecondsRemaining = 15 * 60;
-    let currentSelectedOptionIdx = null;
+    let examSecondsRemaining = 60 * 60;
+    let questionSecondsRemaining = 0;
+    let questionTimerInterval = null;
+    let isExamPaused = false;
+    let currentPaletteTab = "GRID";
 
-    const examHallTestTitle = document.getElementById('examHallTestTitle');
-    const examTimerDisplay = document.getElementById('examTimerDisplay');
-    const examLiveScoreDisplay = document.getElementById('examLiveScoreDisplay');
-    const examQuestionCard = document.getElementById('examQuestionCard');
-    const examScorecardCard = document.getElementById('examScorecardCard');
-    const examProgressLabel = document.getElementById('examProgressLabel');
-    const examPercentLabel = document.getElementById('examPercentLabel');
-    const examProgressBar = document.getElementById('examProgressBar');
-    const examTopicBadge = document.getElementById('examTopicBadge');
-    const examQuestionStatement = document.getElementById('examQuestionStatement');
-    const examOptionsContainer = document.getElementById('examOptionsContainer');
-    const examExplanationBox = document.getElementById('examExplanationBox');
-    const examSubmitAnswerBtn = document.getElementById('examSubmitAnswerBtn');
-    const examNextBtn = document.getElementById('examNextBtn');
-    const examSkipBtn = document.getElementById('examSkipBtn');
-    const exitExamBtn = document.getElementById('exitExamBtn');
+    const cbtInstructionsModal = document.getElementById('cbtInstructionsModal');
+    const cbtInstructionsBackBtn = document.getElementById('cbtInstructionsBackBtn');
+    const cbtAgreeAndContinueBtn = document.getElementById('cbtAgreeAndContinueBtn');
+    const cbtPaletteDrawer = document.getElementById('cbtPaletteDrawer');
+
+    function openCbtInstructions(test) {
+      activeTest = test;
+      document.getElementById('cbtInstTestTitle').textContent = test.title;
+      document.getElementById('cbtInstDuration').textContent = `Duration: ${test.duration || 60} Mins.`;
+      document.getElementById('cbtInstMarks').textContent = `Maximum Marks: ${(test.totalMarks || 100).toFixed(1)}`;
+      
+      const sections = [...new Set(test.questions.map(q => q.topic))];
+      document.getElementById('cbtInstSectionsCount').textContent = `• The test contain ${sections.length} sections having ${test.questions.length} questions.`;
+      document.getElementById('cbtInstFinishTime').textContent = `• You have to finish the test in ${test.duration || 60} minutes.`;
+
+      cbtInstructionsModal.classList.remove('hidden');
+    }
+
+    cbtInstructionsBackBtn.addEventListener('click', () => {
+      cbtInstructionsModal.classList.add('hidden');
+    });
+
+    cbtAgreeAndContinueBtn.addEventListener('click', () => {
+      cbtInstructionsModal.classList.add('hidden');
+      if (activeTest) {
+        startExam(activeTest);
+      }
+    });
 
     function startExam(test) {
       activeTest = test;
       currentQIdx = 0;
-      userSelections = [];
+      cbtProgress = {};
+      test.questions.forEach((q, idx) => {
+        cbtProgress[idx] = {
+          selectedOption: null,
+          isMarkedForReview: false,
+          isBookmarked: false,
+          isVisited: idx === 0,
+          timeSpent: 0
+        };
+      });
+
       examScore = 0.0;
       examCorrectCount = 0;
       examWrongCount = 0;
-      examLiveScoreDisplay.textContent = '0.00 pts';
-      examHallTestTitle.textContent = test.title;
+      isExamPaused = false;
+      document.getElementById('examHallTestTitle').textContent = test.title;
 
       showSection('exam');
-      examScorecardCard.classList.add('hidden');
-      examQuestionCard.classList.remove('hidden');
+      document.getElementById('examScorecardCard').classList.add('hidden');
+      document.getElementById('activeExamView').classList.remove('hidden');
 
+      // Setup Section Tabs in Top Bar
+      const sections = [...new Set(test.questions.map(q => q.topic))];
+      const tabsContainer = document.getElementById('cbtSectionTabsContainer');
+      tabsContainer.innerHTML = '';
+      sections.forEach(secName => {
+        const tabBtn = document.createElement('button');
+        tabBtn.type = 'button';
+        tabBtn.className = 'px-2.5 py-1 rounded text-[11px] font-semibold whitespace-nowrap transition ' +
+          (test.questions[currentQIdx].topic === secName ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200');
+        tabBtn.textContent = secName;
+        tabBtn.addEventListener('click', () => {
+          const firstIdx = test.questions.findIndex(q => q.topic === secName);
+          if (firstIdx !== -1) jumpToQuestion(firstIdx);
+        });
+        tabsContainer.appendChild(tabBtn);
+      });
+
+      // Start Countdown Timer
       clearInterval(examTimerInterval);
-      examSecondsRemaining = (test.duration || 15) * 60;
+      examSecondsRemaining = (test.duration || 60) * 60;
       examTimerInterval = setInterval(() => {
-        if (examSecondsRemaining > 0) {
+        if (!isExamPaused && examSecondsRemaining > 0) {
           examSecondsRemaining--;
-          const m = String(Math.floor(examSecondsRemaining / 60)).padStart(2, '0');
+          const h = String(Math.floor(examSecondsRemaining / 3600)).padStart(2, '0');
+          const m = String(Math.floor((examSecondsRemaining % 3600) / 60)).padStart(2, '0');
           const s = String(examSecondsRemaining % 60).padStart(2, '0');
-          examTimerDisplay.textContent = `${m}:${s}`;
+          document.getElementById('examTimerDisplay').textContent = `${h}:${m}:${s}`;
+        }
+      }, 1000);
+
+      // Question-specific timer
+      clearInterval(questionTimerInterval);
+      questionSecondsRemaining = 0;
+      questionTimerInterval = setInterval(() => {
+        if (!isExamPaused) {
+          questionSecondsRemaining++;
+          const qm = String(Math.floor(questionSecondsRemaining / 60)).padStart(2, '0');
+          const qs = String(questionSecondsRemaining % 60).padStart(2, '0');
+          document.getElementById('cbtQTimerDisplay').textContent = `${qm}:${qs}`;
         }
       }, 1000);
 
       renderExamQuestion();
-      showToast(`Started "${test.title}".`, 'info');
+      showToast(`CBT Session Started: "${test.title}"`, 'info');
     }
-
-    exitExamBtn.addEventListener('click', () => {
-      clearInterval(examTimerInterval);
-      showSection('detail');
-    });
 
     function renderExamQuestion() {
-      currentSelectedOptionIdx = null;
-      examSubmitAnswerBtn.disabled = true;
-      examSubmitAnswerBtn.classList.remove('hidden');
-      examNextBtn.classList.add('hidden');
-      examExplanationBox.classList.add('hidden');
-
-      const total = activeTest.questions.length;
-      const progressPercent = Math.round(((currentQIdx + 1) / total) * 100);
-      examProgressLabel.textContent = `Question ${currentQIdx + 1} of ${total}`;
-      examPercentLabel.textContent = `${progressPercent}% Completed`;
-      examProgressBar.style.width = `${progressPercent}%`;
-
+      questionSecondsRemaining = 0;
       const q = activeTest.questions[currentQIdx];
-      examTopicBadge.textContent = q.topic;
-      examQuestionStatement.textContent = q.question;
+      const prog = cbtProgress[currentQIdx];
+      prog.isVisited = true;
 
-      examOptionsContainer.innerHTML = '';
-      q.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'w-full text-left p-3.5 rounded-xl border border-slate-200 hover:border-purple-400 hover:bg-slate-50 transition flex items-center justify-between text-xs md:text-sm font-medium text-slate-800';
-        btn.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 border border-slate-200">
-              ${String.fromCharCode(65 + idx)}
-            </span>
-            <span>${opt}</span>
-          </div>
-          <span class="dot-indicator hidden text-purple-700 font-bold">●</span>
-        `;
+      document.getElementById('cbtQuestionBadge').textContent = `Question ${currentQIdx + 1}`;
+      document.getElementById('cbtActiveSectionLabel').textContent = `Section: ${q.topic}`;
+      document.getElementById('examQuestionStatement').textContent = q.question;
 
-        btn.addEventListener('click', () => {
-          if (!examExplanationBox.classList.contains('hidden')) return;
-          Array.from(examOptionsContainer.children).forEach(c => {
-            c.classList.remove('border-purple-600', 'bg-purple-50/70', 'ring-2', 'ring-purple-500/20');
-            c.querySelector('.dot-indicator').classList.add('hidden');
-          });
-          btn.classList.add('border-purple-600', 'bg-purple-50/70', 'ring-2', 'ring-purple-500/20');
-          btn.querySelector('.dot-indicator').classList.remove('hidden');
-          currentSelectedOptionIdx = idx;
-          examSubmitAnswerBtn.disabled = false;
-        });
+      // Update right icon states
+      const bookmarkBtn = document.getElementById('cbtBookmarkBtn');
+      bookmarkBtn.style.color = prog.isBookmarked ? '#FBBF24' : '#94A3B8';
 
-        examOptionsContainer.appendChild(btn);
-      });
-    }
+      const reviewStarBtn = document.getElementById('cbtReviewStarBtn');
+      reviewStarBtn.style.color = prog.isMarkedForReview ? '#FBBF24' : '#94A3B8';
 
-    examSubmitAnswerBtn.addEventListener('click', () => {
-      if (currentSelectedOptionIdx === null) return;
-      const q = activeTest.questions[currentQIdx];
-      const isCorrect = currentSelectedOptionIdx === q.correctIndex;
-
-      userSelections.push({
-        questionNumber: currentQIdx + 1,
-        question: q.question,
-        topic: q.topic,
-        chosenIndex: currentSelectedOptionIdx,
-        correctIndex: q.correctIndex,
-        isCorrect: isCorrect,
-        isSkipped: false,
-        explanation: q.explanation
-      });
-
-      const optionButtons = examOptionsContainer.querySelectorAll('button');
-      optionButtons.forEach((b, idx) => {
-        b.disabled = true;
-        if (idx === q.correctIndex) {
-          b.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-800');
-        } else if (idx === currentSelectedOptionIdx) {
-          b.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-800');
+      // Update active section tab highlight
+      const tabs = document.querySelectorAll('#cbtSectionTabsContainer button');
+      tabs.forEach(tab => {
+        if (tab.textContent === q.topic) {
+          tab.className = 'px-2.5 py-1 rounded text-[11px] font-bold whitespace-nowrap bg-slate-700 text-white';
+        } else {
+          tab.className = 'px-2.5 py-1 rounded text-[11px] font-medium whitespace-nowrap text-slate-400 hover:text-slate-200';
         }
       });
 
-      if (isCorrect) {
-        examScore += 1.0;
-        examCorrectCount++;
-        examExplanationBox.innerHTML = `<span class="text-emerald-700 font-bold block mb-1">✓ Correct! (+1.00 mark earned)</span>${q.explanation}`;
-        examExplanationBox.className = 'mb-6 p-4 rounded-xl text-xs md:text-sm border font-medium bg-emerald-50 border-emerald-200 text-slate-800';
-      } else {
-        examScore -= 0.25;
-        examWrongCount++;
-        examExplanationBox.innerHTML = `<span class="text-rose-700 font-bold block mb-1">✗ Incorrect! (-0.25 negative penalty deducted)</span>${q.explanation}`;
-        examExplanationBox.className = 'mb-6 p-4 rounded-xl text-xs md:text-sm border font-medium bg-rose-50 border-rose-200 text-slate-800';
-      }
+      // Render 5 Options
+      const optionsContainer = document.getElementById('examOptionsContainer');
+      optionsContainer.innerHTML = '';
 
-      examExplanationBox.classList.remove('hidden');
-      examLiveScoreDisplay.textContent = `${examScore.toFixed(2)} pts`;
-      examSubmitAnswerBtn.classList.add('hidden');
-      examNextBtn.classList.remove('hidden');
-    });
+      q.options.forEach((optText, optIdx) => {
+        const isSelected = prog.selectedOption === optIdx;
+        const optCard = document.createElement('div');
+        optCard.className = `p-3.5 rounded-lg border cursor-pointer transition flex items-center justify-between text-xs md:text-sm ` +
+          (isSelected
+            ? 'bg-[#1E2A38] border-blue-500 shadow-sm'
+            : 'bg-[#1F242D] border-slate-700/80 hover:border-slate-500 text-slate-200');
 
-    examNextBtn.addEventListener('click', () => {
-      if (currentQIdx < activeTest.questions.length - 1) {
-        currentQIdx++;
-        renderExamQuestion();
-      } else {
-        finishExam();
-      }
-    });
+        optCard.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-xs ${isSelected ? 'text-blue-400' : 'text-slate-400'}">${optIdx + 1}.</span>
+            <span class="${isSelected ? 'text-white font-semibold' : 'text-slate-200'}">${optText}</span>
+          </div>
+          ${isSelected ? '<span class="w-5 h-5 rounded-full bg-blue-500 text-white text-[11px] font-bold flex items-center justify-center">✓</span>' : ''}
+        `;
 
-    examSkipBtn.addEventListener('click', () => {
-      const q = activeTest.questions[currentQIdx];
-      userSelections.push({
-        questionNumber: currentQIdx + 1,
-        question: q.question,
-        topic: q.topic,
-        chosenIndex: null,
-        correctIndex: q.correctIndex,
-        isCorrect: false,
-        isSkipped: true,
-        explanation: q.explanation
+        optCard.addEventListener('click', () => {
+          prog.selectedOption = optIdx;
+          renderExamQuestion();
+        });
+
+        optionsContainer.appendChild(optCard);
       });
 
+      renderPaletteDrawer();
+    }
+
+    function jumpToQuestion(idx) {
+      if (idx >= 0 && idx < activeTest.questions.length) {
+        currentQIdx = idx;
+        renderExamQuestion();
+        cbtPaletteDrawer.classList.add('hidden');
+      }
+    }
+
+    // Save & Next
+    document.getElementById('cbtSaveAndNextBtn').addEventListener('click', () => {
+      const prog = cbtProgress[currentQIdx];
+      prog.timeSpent += questionSecondsRemaining;
       if (currentQIdx < activeTest.questions.length - 1) {
         currentQIdx++;
         renderExamQuestion();
       } else {
+        if (confirm("You are at the final question. Would you like to submit the mock exam?")) {
+          finishExam();
+        }
+      }
+    });
+
+    // Mark & Next
+    document.getElementById('cbtMarkAndNextBtn').addEventListener('click', () => {
+      const prog = cbtProgress[currentQIdx];
+      prog.isMarkedForReview = true;
+      prog.timeSpent += questionSecondsRemaining;
+      if (currentQIdx < activeTest.questions.length - 1) {
+        currentQIdx++;
+        renderExamQuestion();
+      } else {
+        if (confirm("You are at the final question. Would you like to submit the mock exam?")) {
+          finishExam();
+        }
+      }
+    });
+
+    // Clear Option
+    document.getElementById('cbtClearOptionBtn').addEventListener('click', () => {
+      cbtProgress[currentQIdx].selectedOption = null;
+      renderExamQuestion();
+    });
+
+    // Bookmark
+    document.getElementById('cbtBookmarkBtn').addEventListener('click', () => {
+      const prog = cbtProgress[currentQIdx];
+      prog.isBookmarked = !prog.isBookmarked;
+      showToast(prog.isBookmarked ? `Question ${currentQIdx + 1} bookmarked` : 'Bookmark removed', 'info');
+      renderExamQuestion();
+    });
+
+    // Review Star
+    document.getElementById('cbtReviewStarBtn').addEventListener('click', () => {
+      const prog = cbtProgress[currentQIdx];
+      prog.isMarkedForReview = !prog.isMarkedForReview;
+      renderExamQuestion();
+    });
+
+    // Pause Test
+    document.getElementById('cbtPauseBtn').addEventListener('click', () => {
+      isExamPaused = !isExamPaused;
+      document.getElementById('cbtPauseBtn').textContent = isExamPaused ? '▶' : '⏸';
+      showToast(isExamPaused ? 'Exam Paused.' : 'Exam Resumed.', 'info');
+    });
+
+    // Drawer Toggles
+    document.getElementById('cbtDrawerToggleBtn').addEventListener('click', () => {
+      cbtPaletteDrawer.classList.toggle('hidden');
+      renderPaletteDrawer();
+    });
+
+    document.getElementById('cbtCloseDrawerBtn').addEventListener('click', () => {
+      cbtPaletteDrawer.classList.add('hidden');
+    });
+
+    document.getElementById('cbtDrawerTabGrid').addEventListener('click', () => {
+      currentPaletteTab = 'GRID';
+      document.getElementById('cbtDrawerTabGrid').className = 'flex-1 py-2 text-blue-400 border-b-2 border-blue-500';
+      document.getElementById('cbtDrawerTabList').className = 'flex-1 py-2 text-slate-400 hover:text-slate-200';
+      renderPaletteDrawer();
+    });
+
+    document.getElementById('cbtDrawerTabList').addEventListener('click', () => {
+      currentPaletteTab = 'LIST';
+      document.getElementById('cbtDrawerTabList').className = 'flex-1 py-2 text-blue-400 border-b-2 border-blue-500';
+      document.getElementById('cbtDrawerTabGrid').className = 'flex-1 py-2 text-slate-400 hover:text-slate-200';
+      renderPaletteDrawer();
+    });
+
+    document.getElementById('cbtDrawerInstBtn').addEventListener('click', () => {
+      alert("Instructions Summary:\n• 1 mark for correct answer, 0.25 penalty for wrong answer.\n• No negative marks for unattempted.\n• ⭐ Marked for Review, 🔵 Attempted, ⚪ Unattempted, ⭕ Unseen.");
+    });
+
+    document.getElementById('cbtSubmitSectionBtn').addEventListener('click', () => {
+      if (confirm("Submit this section and proceed?")) {
         finishExam();
       }
     });
+
+    document.getElementById('cbtSubmitTestBtn').addEventListener('click', () => {
+      if (confirm("Are you sure you want to finalize and submit the entire test?")) {
+        finishExam();
+      }
+    });
+
+    function renderPaletteDrawer() {
+      if (!activeTest) return;
+      const container = document.getElementById('cbtDrawerSectionsContainer');
+      container.innerHTML = '';
+
+      const sections = [...new Set(activeTest.questions.map(q => q.topic))];
+
+      sections.forEach(secName => {
+        const questionsInSec = activeTest.questions
+          .map((q, idx) => ({ ...q, originalIndex: idx }))
+          .filter(q => q.topic === secName);
+
+        const markedCount = questionsInSec.filter(q => cbtProgress[q.originalIndex]?.isMarkedForReview).length;
+        const attemptedCount = questionsInSec.filter(q => cbtProgress[q.originalIndex]?.selectedOption !== null).length;
+        const unattemptedCount = questionsInSec.filter(q => {
+          const p = cbtProgress[q.originalIndex];
+          return p && p.isVisited && p.selectedOption === null;
+        }).length;
+        const unseenCount = questionsInSec.filter(q => {
+          const p = cbtProgress[q.originalIndex];
+          return !p || !p.isVisited;
+        }).length;
+
+        const secCard = document.createElement('div');
+        secCard.className = 'bg-[#1E2228] border border-slate-800 rounded-lg overflow-hidden';
+
+        secCard.innerHTML = `
+          <div class="p-2.5 flex items-center justify-between cursor-pointer border-b border-slate-800">
+            <span class="text-xs font-bold text-white truncate max-w-[120px]">${secName}</span>
+            <div class="flex items-center gap-1 text-[9px] font-bold">
+              <span class="px-1 py-0.5 rounded bg-rose-950/80 text-rose-300">⭐ ${markedCount}</span>
+              <span class="px-1 py-0.5 rounded bg-blue-950/80 text-blue-300">🔵 ${attemptedCount}</span>
+              <span class="px-1 py-0.5 rounded bg-slate-800 text-slate-300">⚪ ${unattemptedCount}</span>
+              <span class="px-1 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400">⭕ ${unseenCount}</span>
+            </div>
+          </div>
+          <div class="sec-content p-2.5"></div>
+        `;
+
+        const secContent = secCard.querySelector('.sec-content');
+
+        if (currentPaletteTab === 'GRID') {
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-5 gap-2';
+          questionsInSec.forEach(qItem => {
+            const idx = qItem.originalIndex;
+            const prog = cbtProgress[idx];
+            const isCurrent = idx === currentQIdx;
+
+            let bg = 'bg-[#14171C] border border-slate-700 text-slate-400';
+            if (prog.selectedOption !== null) {
+              bg = 'bg-blue-600 text-white font-bold';
+            } else if (prog.isMarkedForReview) {
+              bg = 'bg-rose-600 text-white font-bold';
+            } else if (prog.isVisited) {
+              bg = 'bg-slate-700 text-white font-bold';
+            }
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `w-8 h-8 rounded-full flex items-center justify-center text-xs transition relative ` +
+              (isCurrent ? 'ring-2 ring-white ' : '') + bg;
+            btn.innerHTML = `
+              <span>${idx + 1}</span>
+              ${prog.isMarkedForReview ? '<span class="absolute -top-1 -right-1 text-[8px] text-amber-300">★</span>' : ''}
+            `;
+            btn.addEventListener('click', () => jumpToQuestion(idx));
+            grid.appendChild(btn);
+          });
+          secContent.appendChild(grid);
+        } else {
+          const list = document.createElement('div');
+          list.className = 'space-y-1.5';
+          questionsInSec.forEach(qItem => {
+            const idx = qItem.originalIndex;
+            const isCurrent = idx === currentQIdx;
+            const item = document.createElement('div');
+            item.className = `p-2 rounded text-xs flex items-center justify-between cursor-pointer ` +
+              (isCurrent ? 'bg-slate-700 text-white font-bold' : 'bg-[#14171C] text-slate-300 hover:bg-slate-800');
+            item.innerHTML = `
+              <span class="font-bold">Q${idx + 1}</span>
+              <span class="truncate max-w-[170px] text-[11px] text-slate-400">${qItem.question}</span>
+            `;
+            item.addEventListener('click', () => jumpToQuestion(idx));
+            list.appendChild(item);
+          });
+          secContent.appendChild(list);
+        }
+
+        container.appendChild(secCard);
+      });
+    }
 
     function finishExam() {
       clearInterval(examTimerInterval);
-      examQuestionCard.classList.add('hidden');
-      examScorecardCard.classList.remove('hidden');
+      clearInterval(questionTimerInterval);
+
+      document.getElementById('activeExamView').classList.add('hidden');
+      document.getElementById('examScorecardCard').classList.remove('hidden');
+
+      let computedCorrect = 0;
+      let computedWrong = 0;
+      let computedSkipped = 0;
+
+      activeTest.questions.forEach((q, idx) => {
+        const prog = cbtProgress[idx];
+        if (prog && prog.selectedOption !== null) {
+          if (prog.selectedOption === q.correctIndex) {
+            computedCorrect++;
+          } else {
+            computedWrong++;
+          }
+        } else {
+          computedSkipped++;
+        }
+      });
+
+      examCorrectCount = computedCorrect;
+      examWrongCount = computedWrong;
+      const penalty = (computedWrong * 0.25).toFixed(2);
+      examScore = (computedCorrect * 1.0) - (computedWrong * 0.25);
 
       document.getElementById('cardCorrectCount').textContent = examCorrectCount;
       document.getElementById('cardWrongCount').textContent = examWrongCount;
-      const penalty = (examWrongCount * 0.25).toFixed(2);
       document.getElementById('cardNegativeDeduction').textContent = `-${penalty} pts`;
       document.getElementById('cardNetScore').textContent = `${examScore.toFixed(2)} pts`;
 
-      showToast("Odisha mock evaluated! AI insights & certificate ready.", "success");
+      showToast("Mock test submitted! View your analysis & certificate.", "success");
     }
 
     document.getElementById('cardCatalogReturnBtn').addEventListener('click', () => showSection('detail'));

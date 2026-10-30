@@ -22,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [36])
 class ExampleRobolectricTest {
 
   private lateinit var db: AppDatabase
@@ -236,7 +236,7 @@ class ExampleRobolectricTest {
     assertTrue(opscTests.first().title.contains("OPSC", ignoreCase = true))
 
     val osscTests = testDao.getTestsByCategory("OSSC").first()
-    assertEquals(1, osscTests.size)
+    assertEquals(2, osscTests.size)
     assertEquals("OSSC", osscTests.first().categoryId)
 
     val ossscTests = testDao.getTestsByCategory("OSSSC").first()

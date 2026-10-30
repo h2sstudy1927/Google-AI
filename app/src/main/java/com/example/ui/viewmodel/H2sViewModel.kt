@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.model.CbtQuestionProgress
+import com.example.data.model.CbtQuestionStatus
 import com.example.data.model.ClassChatMessage
 import com.example.data.model.ExamAttemptResult
 import com.example.data.model.ExamCategory
@@ -45,6 +47,7 @@ sealed interface Screen {
   data object Auth : Screen
   data object Home : Screen
   data class FolderDetail(val category: String) : Screen
+  data class ExamInstructions(val testId: String) : Screen
   data class ExamHall(val testId: String) : Screen
   data object Scorecard : Screen
   data object LiveClass : Screen
@@ -140,6 +143,37 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
 
   private val _questionAttempts = MutableStateFlow<List<QuestionAttempt>>(emptyList())
   val questionAttempts: StateFlow<List<QuestionAttempt>> = _questionAttempts.asStateFlow()
+
+  // Online CBT State (matching TCS iON / SBI / OPSC interface)
+  private val _cbtProgress = MutableStateFlow<Map<Int, CbtQuestionProgress>>(emptyMap())
+  val cbtProgress: StateFlow<Map<Int, CbtQuestionProgress>> = _cbtProgress.asStateFlow()
+
+  private val _activeSectionName = MutableStateFlow("")
+  val activeSectionName: StateFlow<String> = _activeSectionName.asStateFlow()
+
+  private val _isPaletteDrawerOpen = MutableStateFlow(false)
+  val isPaletteDrawerOpen: StateFlow<Boolean> = _isPaletteDrawerOpen.asStateFlow()
+
+  private val _paletteTab = MutableStateFlow("GRID") // "GRID" or "LIST"
+  val paletteTab: StateFlow<String> = _paletteTab.asStateFlow()
+
+  private val _selectedLanguage = MutableStateFlow("English")
+  val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
+
+  private val _isExamPaused = MutableStateFlow(false)
+  val isExamPaused: StateFlow<Boolean> = _isExamPaused.asStateFlow()
+
+  private val _questionTimeSeconds = MutableStateFlow(0)
+  val questionTimeSeconds: StateFlow<Int> = _questionTimeSeconds.asStateFlow()
+
+  private val _showInstructionsModal = MutableStateFlow(false)
+  val showInstructionsModal: StateFlow<Boolean> = _showInstructionsModal.asStateFlow()
+
+  private val _showSubmitConfirmModal = MutableStateFlow(false)
+  val showSubmitConfirmModal: StateFlow<Boolean> = _showSubmitConfirmModal.asStateFlow()
+
+  private val _showReportDialog = MutableStateFlow(false)
+  val showReportDialog: StateFlow<Boolean> = _showReportDialog.asStateFlow()
 
   private var timerJob: Job? = null
 
@@ -254,6 +288,11 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     _currentScreen.value = Screen.FolderDetail(category)
   }
 
+  fun openExamInstructions(test: ExamTest) {
+    _activeTest.value = test
+    _currentScreen.value = Screen.ExamInstructions(test.id)
+  }
+
   fun startExam(test: ExamTest) {
     _activeTest.value = test
     _currentQuestionIndex.value = 0
@@ -265,12 +304,37 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     _skippedCount.value = 0
     _questionAttempts.value = emptyList()
     _secondsRemaining.value = test.durationMinutes * 60
+    _questionTimeSeconds.value = 0
+    _isExamPaused.value = false
+    _isPaletteDrawerOpen.value = false
+    _paletteTab.value = "GRID"
+    _showInstructionsModal.value = false
+    _showSubmitConfirmModal.value = false
+    _showReportDialog.value = false
+
+    // Initialize CBT progress map: question 0 visited, rest unvisited
+    val initialProgress = mutableMapOf<Int, CbtQuestionProgress>()
+    for (i in test.questions.indices) {
+      initialProgress[i] = CbtQuestionProgress(
+        questionIndex = i,
+        selectedOption = null,
+        isMarkedForReview = false,
+        isBookmarked = false,
+        isVisited = i == 0,
+        timeSpentSeconds = 0
+      )
+    }
+    _cbtProgress.value = initialProgress
+    _activeSectionName.value = test.questions.firstOrNull()?.topic ?: "General"
 
     timerJob?.cancel()
     timerJob = viewModelScope.launch {
       while (_secondsRemaining.value > 0) {
         delay(1000)
-        _secondsRemaining.value -= 1
+        if (!_isExamPaused.value) {
+          _secondsRemaining.value -= 1
+          _questionTimeSeconds.value += 1
+        }
       }
       finishExam()
     }
@@ -281,7 +345,142 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
   fun selectOption(index: Int) {
     if (!_isCurrentQuestionSubmitted.value) {
       _selectedOptionIndex.value = index
+      val currIdx = _currentQuestionIndex.value
+      val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+      _cbtProgress.value = _cbtProgress.value + (currIdx to prev.copy(selectedOption = index, isVisited = true))
     }
+  }
+
+  fun clearCurrentOption() {
+    val currIdx = _currentQuestionIndex.value
+    _selectedOptionIndex.value = null
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+    _cbtProgress.value = _cbtProgress.value + (currIdx to prev.copy(selectedOption = null, isVisited = true))
+  }
+
+  fun saveAndNext() {
+    val test = _activeTest.value ?: return
+    val currIdx = _currentQuestionIndex.value
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+
+    // Save answer & time spent
+    val updated = prev.copy(
+      selectedOption = _selectedOptionIndex.value,
+      isVisited = true,
+      timeSpentSeconds = prev.timeSpentSeconds + _questionTimeSeconds.value
+    )
+    _cbtProgress.value = _cbtProgress.value + (currIdx to updated)
+
+    if (currIdx < test.questions.size - 1) {
+      val nextIdx = currIdx + 1
+      _currentQuestionIndex.value = nextIdx
+      _questionTimeSeconds.value = 0
+      val nextProgress = _cbtProgress.value[nextIdx] ?: CbtQuestionProgress(nextIdx)
+      _selectedOptionIndex.value = nextProgress.selectedOption
+      _cbtProgress.value = _cbtProgress.value + (nextIdx to nextProgress.copy(isVisited = true))
+      _activeSectionName.value = test.questions[nextIdx].topic
+    } else {
+      _showSubmitConfirmModal.value = true
+    }
+  }
+
+  fun markAndNext() {
+    val test = _activeTest.value ?: return
+    val currIdx = _currentQuestionIndex.value
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+
+    val updated = prev.copy(
+      selectedOption = _selectedOptionIndex.value,
+      isMarkedForReview = true,
+      isVisited = true,
+      timeSpentSeconds = prev.timeSpentSeconds + _questionTimeSeconds.value
+    )
+    _cbtProgress.value = _cbtProgress.value + (currIdx to updated)
+
+    if (currIdx < test.questions.size - 1) {
+      val nextIdx = currIdx + 1
+      _currentQuestionIndex.value = nextIdx
+      _questionTimeSeconds.value = 0
+      val nextProgress = _cbtProgress.value[nextIdx] ?: CbtQuestionProgress(nextIdx)
+      _selectedOptionIndex.value = nextProgress.selectedOption
+      _cbtProgress.value = _cbtProgress.value + (nextIdx to nextProgress.copy(isVisited = true))
+      _activeSectionName.value = test.questions[nextIdx].topic
+    } else {
+      _showSubmitConfirmModal.value = true
+    }
+  }
+
+  fun toggleBookmark() {
+    val currIdx = _currentQuestionIndex.value
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+    val toggled = !prev.isBookmarked
+    _cbtProgress.value = _cbtProgress.value + (currIdx to prev.copy(isBookmarked = toggled))
+    showToast(if (toggled) "Question $currIdx bookmarked" else "Bookmark removed")
+  }
+
+  fun toggleReview() {
+    val currIdx = _currentQuestionIndex.value
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+    val toggled = !prev.isMarkedForReview
+    _cbtProgress.value = _cbtProgress.value + (currIdx to prev.copy(isMarkedForReview = toggled))
+  }
+
+  fun jumpToQuestion(targetIndex: Int) {
+    val test = _activeTest.value ?: return
+    if (targetIndex !in test.questions.indices) return
+
+    val currIdx = _currentQuestionIndex.value
+    val prev = _cbtProgress.value[currIdx] ?: CbtQuestionProgress(currIdx, isVisited = true)
+    val updated = prev.copy(
+      selectedOption = _selectedOptionIndex.value,
+      isVisited = true,
+      timeSpentSeconds = prev.timeSpentSeconds + _questionTimeSeconds.value
+    )
+    _cbtProgress.value = _cbtProgress.value + (currIdx to updated)
+
+    _currentQuestionIndex.value = targetIndex
+    _questionTimeSeconds.value = 0
+    val targetProgress = _cbtProgress.value[targetIndex] ?: CbtQuestionProgress(targetIndex)
+    _selectedOptionIndex.value = targetProgress.selectedOption
+    _cbtProgress.value = _cbtProgress.value + (targetIndex to targetProgress.copy(isVisited = true))
+    _activeSectionName.value = test.questions[targetIndex].topic
+    _isPaletteDrawerOpen.value = false
+  }
+
+  fun selectSection(sectionName: String) {
+    val test = _activeTest.value ?: return
+    val firstIdx = test.questions.indexOfFirst { it.topic == sectionName }
+    if (firstIdx >= 0) {
+      jumpToQuestion(firstIdx)
+    }
+  }
+
+  fun togglePause() {
+    _isExamPaused.value = !_isExamPaused.value
+  }
+
+  fun setPaletteDrawerOpen(open: Boolean) {
+    _isPaletteDrawerOpen.value = open
+  }
+
+  fun setPaletteTab(tab: String) {
+    _paletteTab.value = tab
+  }
+
+  fun setSelectedLanguage(lang: String) {
+    _selectedLanguage.value = lang
+  }
+
+  fun setShowInstructionsModal(show: Boolean) {
+    _showInstructionsModal.value = show
+  }
+
+  fun setShowSubmitConfirmModal(show: Boolean) {
+    _showSubmitConfirmModal.value = show
+  }
+
+  fun setShowReportDialog(show: Boolean) {
+    _showReportDialog.value = show
   }
 
   fun submitAnswer() {
@@ -350,13 +549,80 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
+  fun submitExam() {
+    finishExam()
+  }
+
   private fun finishExam() {
     timerJob?.cancel()
+    _showSubmitConfirmModal.value = false
+    _isPaletteDrawerOpen.value = false
     val test = _activeTest.value ?: return
     val user = currentUser.value
-    val totalAnswered = _correctCount.value + _wrongCount.value
-    val accuracy = if (totalAnswered > 0) (_correctCount.value * 100) / totalAnswered else 0
-    val penalty = _wrongCount.value * 0.25
+
+    // Consolidate current question state if active
+    val currIdx = _currentQuestionIndex.value
+    val currentProg = _cbtProgress.value[currIdx]
+    val finalProgMap = if (currentProg != null) {
+      _cbtProgress.value + (currIdx to currentProg.copy(selectedOption = _selectedOptionIndex.value, isVisited = true))
+    } else {
+      _cbtProgress.value
+    }
+
+    var computedCorrect = 0
+    var computedWrong = 0
+    var computedSkipped = 0
+    val attempts = mutableListOf<QuestionAttempt>()
+
+    for ((index, q) in test.questions.withIndex()) {
+      val prog = finalProgMap[index]
+      val chosen = prog?.selectedOption
+      if (chosen != null) {
+        val isCorrect = chosen == q.correctIndex
+        if (isCorrect) {
+          computedCorrect += 1
+        } else {
+          computedWrong += 1
+        }
+        attempts.add(
+          QuestionAttempt(
+            questionNumber = index + 1,
+            question = q.question,
+            topic = q.topic,
+            chosenIndex = chosen,
+            correctIndex = q.correctIndex,
+            isCorrect = isCorrect,
+            isSkipped = false,
+            explanation = q.explanation
+          )
+        )
+      } else {
+        computedSkipped += 1
+        attempts.add(
+          QuestionAttempt(
+            questionNumber = index + 1,
+            question = q.question,
+            topic = q.topic,
+            chosenIndex = null,
+            correctIndex = q.correctIndex,
+            isCorrect = false,
+            isSkipped = true,
+            explanation = q.explanation
+          )
+        )
+      }
+    }
+
+    _correctCount.value = computedCorrect
+    _wrongCount.value = computedWrong
+    _skippedCount.value = computedSkipped
+
+    val totalAnswered = computedCorrect + computedWrong
+    val accuracy = if (totalAnswered > 0) (computedCorrect * 100) / totalAnswered else 0
+    val penalty = computedWrong * 0.25
+    val netScore = (computedCorrect * 1.0) - penalty
+    _liveScore.value = netScore
+    _questionAttempts.value = attempts
 
     val result = ExamAttemptResult(
       testId = test.id,
@@ -364,14 +630,14 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
       category = test.category,
       candidateName = user?.name ?: "Odisha Candidate",
       candidateDistrict = user?.district ?: "Kalahandi",
-      correctCount = _correctCount.value,
-      wrongCount = _wrongCount.value,
-      skippedCount = _skippedCount.value,
+      correctCount = computedCorrect,
+      wrongCount = computedWrong,
+      skippedCount = computedSkipped,
       penaltyDeducted = penalty,
-      netScore = _liveScore.value,
+      netScore = netScore,
       accuracyPercent = accuracy,
       verificationId = "H2S-OD-${Random.nextInt(1000, 9999)}",
-      questionAttempts = _questionAttempts.value
+      questionAttempts = attempts
     )
 
     viewModelScope.launch {
@@ -383,10 +649,10 @@ class H2sViewModel(application: Application) : AndroidViewModel(application) {
             testId = test.id,
             testTitle = test.title,
             category = test.category,
-            score = _liveScore.value,
+            score = netScore,
             totalQuestions = test.questions.size,
-            correctAnswers = _correctCount.value,
-            incorrectAnswers = _wrongCount.value,
+            correctAnswers = computedCorrect,
+            incorrectAnswers = computedWrong,
             timeTakenSeconds = if (timeElapsed > 0) timeElapsed else 60L
           )
         }

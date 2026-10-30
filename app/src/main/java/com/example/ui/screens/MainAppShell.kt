@@ -111,6 +111,18 @@ fun MainAppShell(
   val showCommunityDialog by viewModel.showCommunityDialog.collectAsStateWithLifecycle()
   val toastMessage by viewModel.toastMessage.collectAsStateWithLifecycle()
 
+  // CBT Exam State
+  val cbtProgress by viewModel.cbtProgress.collectAsStateWithLifecycle()
+  val activeSectionName by viewModel.activeSectionName.collectAsStateWithLifecycle()
+  val isPaletteDrawerOpen by viewModel.isPaletteDrawerOpen.collectAsStateWithLifecycle()
+  val paletteTab by viewModel.paletteTab.collectAsStateWithLifecycle()
+  val selectedLanguage by viewModel.selectedLanguage.collectAsStateWithLifecycle()
+  val isExamPaused by viewModel.isExamPaused.collectAsStateWithLifecycle()
+  val questionTimeSeconds by viewModel.questionTimeSeconds.collectAsStateWithLifecycle()
+  val showInstructionsModal by viewModel.showInstructionsModal.collectAsStateWithLifecycle()
+  val showSubmitConfirmModal by viewModel.showSubmitConfirmModal.collectAsStateWithLifecycle()
+  val showReportDialog by viewModel.showReportDialog.collectAsStateWithLifecycle()
+
   LaunchedEffect(toastMessage) {
     if (toastMessage != null) {
       delay(3000)
@@ -121,6 +133,7 @@ fun MainAppShell(
   // System Back Navigation Handling
   BackHandler(enabled = currentScreen != Screen.Home && currentScreen != Screen.Auth) {
     when (currentScreen) {
+      is Screen.ExamInstructions -> viewModel.navigateTo(Screen.FolderDetail(selectedCategory))
       is Screen.ExamHall -> viewModel.navigateTo(Screen.FolderDetail(selectedCategory))
       is Screen.Scorecard -> viewModel.navigateTo(Screen.Home)
       is Screen.FolderDetail -> viewModel.navigateTo(Screen.Home)
@@ -131,6 +144,7 @@ fun MainAppShell(
 
   val isTeacherOrAdmin = currentUser?.role == "teacher" || currentUser?.isAdmin == true
   val pendingReqCount = approvalRequests.count { it.status == "pending" }
+  val isExamMode = currentScreen is Screen.ExamHall || currentScreen is Screen.ExamInstructions
 
   // Auth gate if signed out
   if (currentUser == null || currentScreen == Screen.Auth) {
@@ -153,11 +167,12 @@ fun MainAppShell(
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
-    containerColor = Slate50,
-    contentWindowInsets = WindowInsets.safeDrawing,
+    containerColor = if (isExamMode) Color(0xFF14171C) else Slate50,
+    contentWindowInsets = if (isExamMode) WindowInsets(0, 0, 0, 0) else WindowInsets.safeDrawing,
     topBar = {
-      TopAppBar(
-        title = {
+      if (!isExamMode) {
+        TopAppBar(
+          title = {
           Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
               text = "H2S STUDY",
@@ -245,8 +260,10 @@ fun MainAppShell(
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Purple900)
       )
-    },
-    bottomBar = {
+    }
+  },
+  bottomBar = {
+    if (!isExamMode) {
       NavigationBar(
         containerColor = Color.White,
         contentColor = Purple900,
@@ -255,7 +272,7 @@ fun MainAppShell(
       ) {
         val activeBottomTab = when (currentScreen) {
           Screen.Home -> "home"
-          is Screen.FolderDetail, is Screen.ExamHall, Screen.Scorecard -> "mocks"
+          is Screen.FolderDetail, is Screen.ExamInstructions, is Screen.ExamHall, Screen.Scorecard -> "mocks"
           Screen.LiveClass -> "live"
           Screen.AiMentor -> "ai"
           else -> "home"
@@ -328,7 +345,8 @@ fun MainAppShell(
         )
       }
     }
-  ) { innerPadding ->
+  }
+) { innerPadding ->
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -344,7 +362,7 @@ fun MainAppShell(
             totalAttempted = totalTestsAttempted,
             averageScore = averageScore,
             onSelectCategory = { cat -> viewModel.openFolder(cat) },
-            onAttemptTest = { test -> viewModel.startExam(test) },
+            onAttemptTest = { test -> viewModel.openExamInstructions(test) },
             onOpenLiveClass = { viewModel.navigateTo(Screen.LiveClass) },
             onOpenAiMentor = { viewModel.navigateTo(Screen.AiMentor) },
             onReviewAttempt = { viewModel.navigateTo(Screen.Scorecard) },
@@ -359,9 +377,21 @@ fun MainAppShell(
             tests = allTests,
             isTeacher = isTeacherOrAdmin,
             onBack = { viewModel.navigateTo(Screen.Home) },
-            onAttemptTest = { test -> viewModel.startExam(test) },
+            onAttemptTest = { test -> viewModel.openExamInstructions(test) },
             onOpenCreateMock = { viewModel.navigateTo(Screen.CreateMock) }
           )
+        }
+
+        is Screen.ExamInstructions -> {
+          activeTest?.let { test ->
+            ExamInstructionsScreen(
+              test = test,
+              selectedLanguage = selectedLanguage,
+              onSelectLanguage = { lang -> viewModel.setSelectedLanguage(lang) },
+              onStartExam = { viewModel.startExam(test) },
+              onBack = { viewModel.navigateTo(Screen.FolderDetail(selectedCategory)) }
+            )
+          }
         }
 
         is Screen.ExamHall -> {
@@ -370,13 +400,31 @@ fun MainAppShell(
               test = test,
               questionIndex = currentQuestionIndex,
               selectedOptionIndex = selectedOptionIndex,
-              isSubmitted = isCurrentQuestionSubmitted,
-              liveScore = liveScore,
               secondsRemaining = secondsRemaining,
+              questionTimeSeconds = questionTimeSeconds,
+              isPaused = isExamPaused,
+              cbtProgress = cbtProgress,
+              activeSection = activeSectionName,
+              isPaletteDrawerOpen = isPaletteDrawerOpen,
+              paletteTab = paletteTab,
+              showInstructionsModal = showInstructionsModal,
+              showSubmitConfirmModal = showSubmitConfirmModal,
+              showReportDialog = showReportDialog,
               onSelectOption = { idx -> viewModel.selectOption(idx) },
-              onSubmitAnswer = { viewModel.submitAnswer() },
-              onNextQuestion = { viewModel.nextQuestion() },
-              onSkipQuestion = { viewModel.skipQuestion() },
+              onClearOption = { viewModel.clearCurrentOption() },
+              onSaveAndNext = { viewModel.saveAndNext() },
+              onMarkAndNext = { viewModel.markAndNext() },
+              onToggleBookmark = { viewModel.toggleBookmark() },
+              onToggleReview = { viewModel.toggleReview() },
+              onJumpToQuestion = { idx -> viewModel.jumpToQuestion(idx) },
+              onSelectSection = { sec -> viewModel.selectSection(sec) },
+              onTogglePause = { viewModel.togglePause() },
+              onSetPaletteDrawerOpen = { open -> viewModel.setPaletteDrawerOpen(open) },
+              onSetPaletteTab = { tab -> viewModel.setPaletteTab(tab) },
+              onSetShowInstructionsModal = { show -> viewModel.setShowInstructionsModal(show) },
+              onSetShowSubmitConfirmModal = { show -> viewModel.setShowSubmitConfirmModal(show) },
+              onSetShowReportDialog = { show -> viewModel.setShowReportDialog(show) },
+              onSubmitExam = { viewModel.submitExam() },
               onExitExam = { viewModel.navigateTo(Screen.FolderDetail(selectedCategory)) }
             )
           }

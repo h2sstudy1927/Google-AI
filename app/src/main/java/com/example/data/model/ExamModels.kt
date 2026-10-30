@@ -174,3 +174,39 @@ data class WhiteboardStroke(
   val isEraser: Boolean = false,
   val shapeType: String = "free" // "free", "line", "rect"
 )
+
+enum class CbtQuestionStatus {
+  UNSEEN,
+  UNATTEMPTED,
+  ATTEMPTED,
+  MARKED_FOR_REVIEW,
+  ATTEMPTED_AND_MARKED
+}
+
+data class CbtQuestionProgress(
+  val questionIndex: Int,
+  val selectedOption: Int? = null,
+  val isMarkedForReview: Boolean = false,
+  val isBookmarked: Boolean = false,
+  val isVisited: Boolean = false,
+  val timeSpentSeconds: Int = 0
+) {
+  val status: CbtQuestionStatus
+    get() = when {
+      selectedOption != null && isMarkedForReview -> CbtQuestionStatus.ATTEMPTED_AND_MARKED
+      selectedOption != null -> CbtQuestionStatus.ATTEMPTED
+      isMarkedForReview -> CbtQuestionStatus.MARKED_FOR_REVIEW
+      isVisited -> CbtQuestionStatus.UNATTEMPTED
+      else -> CbtQuestionStatus.UNSEEN
+    }
+}
+
+data class CbtSectionSummary(
+  val name: String,
+  val questionIndices: List<Int>,
+  val markedCount: Int,
+  val attemptedCount: Int,
+  val unattemptedCount: Int,
+  val unseenCount: Int
+)
+
